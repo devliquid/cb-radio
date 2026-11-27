@@ -38,6 +38,14 @@ const settings = (() => {
 // Installs from 1.0.2 and earlier saved the old default, localhost. Unless this PC hosts, move them to the new default.
 if (settings.server === 'ws://localhost:7140' && !settings.host) settings.server = DEFAULTS.server;
 function save() { try { localStorage.setItem('breaker40', JSON.stringify(settings)); } catch {} }
+// Put the hosted base station in the saved list once. If someone deletes it, it stays deleted.
+if (!settings.hostedStationAdded) {
+  if (!settings.stations.some((s) => s.url === DEFAULTS.server)) {
+    settings.stations = [{ name: 'Render (hosted)', url: DEFAULTS.server }, ...settings.stations];
+  }
+  settings.hostedStationAdded = true;
+  save();
+}
 const handle = () => settings.handle || 'Unknown';
 
 // ---------- state ----------

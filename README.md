@@ -42,7 +42,7 @@ Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases
 Each PC keeps its own settings, and they're still there after a restart.
 
 - **Your handle:** the name others see when you talk.
-- **Saved base stations:** type an address, give it a name ("My server", "Home LAN") and click **Save to list**. Picking a station from the list connects to it straight away. **Delete** removes the selected one.
+- **Saved base stations:** the list starts with **Render (hosted)**, the hosted base station. To add another, type an address, give it a name ("My server", "Home LAN") and click **Save to list**. Picking a station from the list connects to it straight away. **Delete** removes the selected one.
 - **Base station address:** starts out as the hosted base station, `wss://breaker40-base-station.onrender.com`, so a new install is on the air right away. To use another one, enter `ws://ip:port`, `wss://domain`, just a domain name (the app adds `wss://`), or just an IP (the app adds port 7140), and click **Connect**.
 - **Be the base station:** run the relay on this PC, on any port.
 - **Microphone / Speaker:** choose devices, or leave them on Windows default. If a chosen device is unplugged, the app falls back to the default.
