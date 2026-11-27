@@ -50,6 +50,7 @@
       "artifactName": "Breaker40-CB-${version}-linux-${arch}.${ext}"
     },
     "deb": {
+      "afterInstall": "build/deb-after-install.sh",
       "artifactName": "breaker40-cb_${version}_${arch}.${ext}"
     },
     "portable": {
