@@ -6,7 +6,9 @@
 # users, so the app then finds no usable sandbox and aborts. Like Google Chrome's .deb, always make
 # the helper setuid root.
 
-APP_DIR='/opt/Breaker 40 CB'
+# No spaces: with the sandbox on, Chromium splits its own path at spaces when it starts its helpers.
+# `npm run dist:linux` builds with productName Breaker40CB for that reason.
+APP_DIR='/opt/Breaker40CB'
 EXE='breaker40-cb'
 
 # /usr/bin/breaker40-cb

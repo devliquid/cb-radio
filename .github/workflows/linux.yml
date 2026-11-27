@@ -102,7 +102,9 @@ jobs:
           check appimage "$appimage"
 
           sudo apt-get install -y ./dist/*.deb
-          check deb /opt/"Breaker 40 CB"/breaker40-cb
+          grep -q 'Name=Breaker 40 CB' /usr/share/applications/breaker40-cb.desktop || { echo "::error::menu entry name is wrong"; cat /usr/share/applications/breaker40-cb.desktop; exit 1; }
+          # started the way the menu entry does
+          check deb breaker40-cb
 
           cat base.log
 
