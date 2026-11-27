@@ -4,12 +4,15 @@
   "version": "1.0.0",
   "description": "A 40-channel CB radio for your desktop. Push to talk with anyone else running the app.",
   "main": "main.js",
+  "author": "devliquid <78886688+devliquid@users.noreply.github.com>",
+  "homepage": "https://github.com/devliquid/cb-radio",
   "scripts": {
     "start": "electron .",
     "server": "node server/server.js",
     "test": "node test/relay-test.js",
     "test:exe": "node test/basestation-exe-test.js",
     "dist": "electron-builder --win portable nsis",
+    "dist:linux": "electron-builder --linux AppImage deb",
     "dist:relay": "node build/build-relay.js",
     "dist:all": "npm run dist && npm run dist:relay"
   },
@@ -37,6 +40,16 @@
         "portable",
         "nsis"
       ]
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "executableName": "breaker40-cb",
+      "category": "Network",
+      "synopsis": "40-channel push-to-talk CB radio",
+      "artifactName": "Breaker40-CB-${version}-linux-${arch}.${ext}"
+    },
+    "deb": {
+      "artifactName": "breaker40-cb_${version}_${arch}.${ext}"
     },
     "portable": {
       "artifactName": "Breaker40-CB-Portable-${version}.exe"

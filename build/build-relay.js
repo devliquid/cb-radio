@@ -1,9 +1,11 @@
-// Builds dist/Breaker40-BaseStation.exe: the relay as one Windows exe that needs no Node install.
+// Builds the base station as one file that needs no Node install, for the platform it runs on:
+//   Windows: dist/Breaker40-BaseStation.exe
+//   Linux:   dist/Breaker40-BaseStation-linux-x64 (or -linux-arm64)
 //   npm run dist:relay
 //
 // 1. esbuild bundles server/relay.js and its `ws` dependency into one script.
-// 2. Node's single-executable feature (`node --build-sea`) wraps it in a copy of node.exe.
-// 3. rcedit (from electron-builder's cache, if present) adds the icon and file details.
+// 2. Node's single-executable feature (`node --build-sea`) wraps it in a copy of this Node binary.
+// 3. Windows only: rcedit (from electron-builder's cache, if present) adds the icon and file details.
 
 const fs = require('fs');
 const os = require('os');
@@ -14,7 +16,9 @@ const esbuild = require('esbuild');
 const root = path.join(__dirname, '..');
 const out = path.join(__dirname, 'out');
 const dist = path.join(root, 'dist');
-const exe = path.join(dist, 'Breaker40-BaseStation.exe');
+const isWin = process.platform === 'win32';
+const exeName = isWin ? 'Breaker40-BaseStation.exe' : `Breaker40-BaseStation-${process.platform}-${process.arch}`;
+const exe = path.join(dist, exeName);
 const version = require('../package.json').version;
 
 fs.mkdirSync(out, { recursive: true });
@@ -52,6 +56,7 @@ fs.writeFileSync(seaConfig, JSON.stringify({
 }, null, 2));
 try { fs.unlinkSync(exe); } catch {}
 execFileSync(process.execPath, ['--build-sea', seaConfig], { stdio: 'inherit' });
+if (!isWin) fs.chmodSync(exe, 0o755);
 console.log('built     ', path.relative(root, exe));
 
 // 3. icon + details
@@ -75,16 +80,18 @@ function writeIco(png, file) {
   head.writeUInt32LE(png.length, 14); head.writeUInt32LE(22, 18);
   fs.writeFileSync(file, Buffer.concat([head, png]));
 }
-const rcedit = findRcedit();
+const rcedit = isWin ? findRcedit() : null;
 const iconPng = path.join(__dirname, 'icon-256.png');
-if (rcedit && fs.existsSync(iconPng)) {
+if (!isWin) {
+  // Linux executables carry no icon or file details
+} else if (rcedit && fs.existsSync(iconPng)) {
   const ico = path.join(out, 'basestation.ico');
   writeIco(fs.readFileSync(iconPng), ico);
   execFileSync(rcedit, [exe,
     '--set-icon', ico,
     '--set-version-string', 'FileDescription', 'Breaker 40 Base Station',
     '--set-version-string', 'ProductName', 'Breaker 40 CB',
-    '--set-version-string', 'OriginalFilename', 'Breaker40-BaseStation.exe',
+    '--set-version-string', 'OriginalFilename', exeName,
     '--set-version-string', 'InternalName', 'Breaker40-BaseStation',
     '--set-version-string', 'CompanyName', '',
     '--set-version-string', 'LegalCopyright', '',

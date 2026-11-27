@@ -1,4 +1,5 @@
-// Checks dist/Breaker40-BaseStation.exe: settings file, flags, typed menu, errors, and relaying audio.
+// Checks the base station built for this platform (dist/Breaker40-BaseStation.exe on Windows,
+// dist/Breaker40-BaseStation-linux-<arch> on Linux): settings file, flags, typed menu, errors, relaying audio.
 //   npm run dist:relay && node test/basestation-exe-test.js
 const assert = require('assert');
 const fs = require('fs');
@@ -8,10 +9,12 @@ const path = require('path');
 const { spawn, spawnSync } = require('child_process');
 const WebSocket = require('ws');
 
-const src = path.join(__dirname, '..', 'dist', 'Breaker40-BaseStation.exe');
+const exeName = process.platform === 'win32' ? 'Breaker40-BaseStation.exe' : `Breaker40-BaseStation-${process.platform}-${process.arch}`;
+const src = path.join(__dirname, '..', 'dist', exeName);
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'b40-'));
-const exe = path.join(dir, 'Breaker40-BaseStation.exe');
+const exe = path.join(dir, exeName);
 fs.copyFileSync(src, exe);
+fs.chmodSync(exe, 0o755);
 const settingsFile = path.join(dir, 'relay-settings.json');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 

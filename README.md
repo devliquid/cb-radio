@@ -1,8 +1,26 @@
 # Breaker 40 CB
 
-A 40-channel CB radio for Windows. Pick a channel, hold the mic button (or the Space bar), and talk to everyone else on that channel who is running the app.
+A 40-channel CB radio for Windows and Linux. Pick a channel, hold the mic button (or the Space bar), and talk to everyone else on that channel who is running the app.
 
 ![radio](build/icon.png)
+
+## Downloads
+
+Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases/latest).
+
+| File | What it is |
+|---|---|
+| `Breaker40-CB-Setup-<version>.exe` | Windows: the radio, as an installer |
+| `Breaker40-CB-Portable-<version>.exe` | Windows: the radio as one file that runs without installing |
+| `Breaker40-BaseStation.exe` | Windows: the base station |
+| `Breaker40-CB-<version>-linux-x64.AppImage` | Linux: the radio as one file for any distro (`-arm64` for ARM) |
+| `breaker40-cb_<version>_amd64.deb` | Linux: the radio for Ubuntu, Debian and Mint (`_arm64` for ARM) |
+| `Breaker40-BaseStation-linux-x64` | Linux: the base station (`-arm64` for ARM, such as a Raspberry Pi 4 or 5 on a 64-bit OS) |
+
+**On Linux:**
+- **AppImage:** run `chmod +x Breaker40-CB-*.AppImage`, then double-click it or run `./Breaker40-CB-*.AppImage`. If it says FUSE is missing, install it (`sudo apt install libfuse2t64`, or `libfuse2` on Ubuntu 22.04 and older), or run it with `--appimage-extract-and-run`.
+- **.deb:** run `sudo apt install ./breaker40-cb_*.deb`. It shows up in the app menu as Breaker 40 CB.
+- **Base station:** run `chmod +x Breaker40-BaseStation-linux-x64`, then `./Breaker40-BaseStation-linux-x64`. It works the same as the Windows exe (see [The base station exe](#the-base-station-exe)). Ports below 1024 need root, so stick to ports like 7140.
 
 ## What's on the radio
 
@@ -43,7 +61,7 @@ Every copy of the app connects to one **base station** (a small relay server). E
 
 **Over the internet, always on, without a Windows server:** deploy the `server/` folder to any Node host that supports WebSockets, such as Render, Railway, Fly.io or a small VPS.
 - Render: create a new **Web Service** from a repo containing this project, set the root directory to `server`, the build command to `npm install`, and the start command to `npm start`. It gives you an address like `https://my-cb.onrender.com`. Everyone enters `wss://my-cb.onrender.com` in SETUP.
-- On Linux, run `npm install` in the `server` folder, then `node relay.js`. It uses the same settings file, flags and typed menu as the exe.
+- On a Linux server, use `Breaker40-BaseStation-linux-x64` from the Releases page. Or, if Node is installed, run `npm install` in the `server` folder, then `node relay.js`. Both use the same settings file, flags and typed menu as the exe.
 
 To make that the address every new install starts with, change `server:` in `DEFAULTS` at the top of `renderer/app.js` and rebuild.
 
@@ -75,6 +93,25 @@ The first time it runs, Windows Firewall asks whether to allow it. Allow it on t
 
 To run it with no one logged in, start it at boot with Task Scheduler ("Run whether user is logged on or not") using the flags above. With no console attached it skips the typed menu and just runs.
 
+**On Linux,** the settings file sits next to `Breaker40-BaseStation-linux-x64` the same way, and the flags are the same. To open the port in the firewall on Ubuntu, run `sudo ufw allow 7140/tcp`. To keep it running at boot, save this as `/etc/systemd/system/breaker40.service` (change the path and user to yours):
+
+```ini
+[Unit]
+Description=Breaker 40 CB base station
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/opt/breaker40/Breaker40-BaseStation-linux-x64 --port 7140 --ip 0.0.0.0
+User=breaker40
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then run `sudo systemctl enable --now breaker40`, and use `journalctl -u breaker40 -f` to watch who joins.
+
 ## Building
 
 ```powershell
@@ -82,11 +119,16 @@ npm install
 npm start          # run it
 npm test           # relay server checks
 npm run dist       # builds dist\Breaker40-CB-Portable-1.0.0.exe and dist\Breaker40-CB-Setup-1.0.0.exe
-npm run dist:relay # builds dist\Breaker40-BaseStation.exe
-npm run dist:all   # all three
+npm run dist:relay # builds the base station for this platform (dist\Breaker40-BaseStation.exe on Windows)
+npm run dist:all   # all three Windows files
 npm run test:exe   # checks the base station exe (build it first)
 npm run server     # run a base station without the radio window
+npm run dist:linux # on Linux: builds the AppImage and .deb
 ```
+
+**Linux builds** come from GitHub Actions (`.github/workflows/linux.yml`), because electron-builder can't make Linux packages on Windows. Every push to `main` builds the x64 and arm64 versions on GitHub's Linux machines. It runs the relay and base station tests, then opens the AppImage and the .deb with a fake mic, checks they connect to a base station, and takes a screenshot. The files and screenshots are on the run's page under **Artifacts**.
+
+To put the Linux files on a release, push a `v*` tag after creating the release. Or run the workflow by hand (**Actions → Linux build → Run workflow**) and enter the release's tag.
 
 Notes:
 - If `npm start` says Electron failed to install, unpack `%LOCALAPPDATA%\electron\Cache\...\electron-v33.4.11-win32-x64.zip` into `node_modules\electron\dist` and create `node_modules\electron\path.txt` containing `electron.exe`.

@@ -1,0 +1,121 @@
+# Builds and tests the Linux versions on GitHub's Linux machines:
+#   the radio as an AppImage and a .deb, and the base station as one executable, for x64 and arm64.
+# Runs on every push to main. For a v* tag, or a manual run with a release tag filled in,
+# it also attaches the files to that GitHub release.
+name: Linux build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Attach the files to this existing release tag (for example v1.0.0). Leave empty to only build.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # node --build-sea (the base station executable) needs Node 25.5 or newer
+          node-version: '26'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Relay tests
+        run: npm test
+
+      - name: Build the base station
+        run: npm run dist:relay
+
+      - name: Test the base station executable
+        run: npm run test:exe
+
+      - name: Build the radio (AppImage and .deb)
+        run: npm run dist:linux -- --publish never
+
+      - name: Install what the smoke tests need
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth pulseaudio
+
+      # Start the base station, then open each build of the radio, connect it to the base station,
+      # open a fake mic, and take a screenshot.
+      - name: Smoke-test the AppImage and the .deb
+        env:
+          CB_FAKE_MIC: '1'
+          CB_SCREENSHOT_DELAY: '2000'
+          CB_EVAL: >-
+            (async () => {
+              settings.server = 'ws://127.0.0.1:7140'; settings.handle = 'CI';
+              connect();
+              await new Promise((r) => setTimeout(r, 2500));
+              let micErr = null; try { await openMic(); } catch (e) { micErr = String(e); }
+              return { connected, people: counts.reduce((a, b) => a + b, 0),
+                       state: document.getElementById('connState').textContent, mic: !!micStream, micErr };
+            })()
+        run: |
+          set -e
+          pulseaudio --start --exit-idle-time=-1 || true
+          ./dist/Breaker40-BaseStation-linux-${{ matrix.arch }} --port 7140 --ip 127.0.0.1 > base.log 2>&1 &
+          sleep 2
+
+          check() {
+            name="$1"; shift
+            CB_SCREENSHOT="$PWD/screenshot-$name-${{ matrix.arch }}.png" \
+              xvfb-run -a -s "-screen 0 1280x720x24" "$@" > "$name.log" 2>&1 || true
+            cat "$name.log"
+            grep -q '"connected":true' "$name.log" || { echo "::error::$name did not connect to the base station"; exit 1; }
+            test -s "screenshot-$name-${{ matrix.arch }}.png" || { echo "::error::$name took no screenshot"; exit 1; }
+          }
+
+          appimage=$(ls dist/*.AppImage)
+          chmod +x "$appimage"
+          APPIMAGE_EXTRACT_AND_RUN=1 check appimage "$appimage"
+
+          sudo apt-get install -y ./dist/*.deb
+          check deb /opt/"Breaker 40 CB"/breaker40-cb
+
+          cat base.log
+
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.arch }}
+          path: screenshot-*.png
+          if-no-files-found: ignore
+
+      - name: Keep the Linux builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/Breaker40-BaseStation-linux-*
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag || github.ref_name }}
+        run: gh release upload "$TAG" dist/*.AppImage dist/*.deb dist/Breaker40-BaseStation-linux-* --clobber
