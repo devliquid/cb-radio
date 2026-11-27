@@ -30,9 +30,9 @@ jobs:
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           # node --build-sea (the base station executable) needs Node 25.5 or newer
           node-version: '26'
@@ -98,14 +98,14 @@ jobs:
 
       - name: Keep the screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: screenshots-${{ matrix.arch }}
           path: screenshot-*.png
           if-no-files-found: ignore
 
       - name: Keep the Linux builds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: linux-${{ matrix.arch }}
           path: |
