@@ -1,0 +1,19 @@
+# Render Blueprint for the Breaker 40 base station.
+# In Render: New > Blueprint, pick this repository, and click Apply.
+# Render builds the server/ folder and gives it an address like
+# https://breaker40-base-station.onrender.com. In each radio's SETUP, enter
+#   wss://breaker40-base-station.onrender.com
+# (or just the name without wss://; the app adds it).
+services:
+  - type: web
+    name: breaker40-base-station
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install --omit=dev
+    startCommand: node relay.js
+    healthCheckPath: /
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - server/**

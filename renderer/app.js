@@ -460,12 +460,15 @@ function normalizeServer(s) {
   s = String(s || '').trim();
   if (!s) return '';
   if (/^https?:\/\//i.test(s)) s = s.replace(/^http/i, 'ws');
-  if (!/^wss?:\/\//i.test(s)) s = `ws://${s}`;
-  // bare host without a port on plain ws: assume the default relay port
+  const bare = !/^wss?:\/\//i.test(s);
+  if (bare) s = `ws://${s}`;
   try {
     const u = new URL(s);
     const local = u.hostname === 'localhost' || /^[\d.]+$/.test(u.hostname) || !u.hostname.includes('.');
+    // bare IP or LAN name without a port: assume the default relay port
     if (u.protocol === 'ws:' && !u.port && local) u.port = '7140';
+    // bare domain name without a port (e.g. my-cb.onrender.com): a hosted base station, so secure
+    if (bare && !u.port && !local) u.protocol = 'wss:';
     return u.toString().replace(/\/$/, '');
   } catch { return s; }
 }

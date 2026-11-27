@@ -96,7 +96,10 @@ function localAddresses() {
   }
   return out;
 }
+// On a host such as Render, the public address comes from its environment.
+const publicHost = process.env.RENDER_EXTERNAL_HOSTNAME || "";
 function connectAddresses(s) {
+  if (publicHost) return [`wss://${publicHost}`];
   if (s.ip === '0.0.0.0' || s.ip === '::') {
     return [...localAddresses().map((a) => `ws://${a.address}:${s.port}`), `ws://localhost:${s.port}`];
   }
@@ -140,8 +143,10 @@ async function goLive(s) {
   line();
   console.log('  In the radio\'s SETUP, people enter one of these:');
   for (const a of connectAddresses(s)) console.log(`     ${a}`);
-  console.log('  From the internet, use your public IP or domain with the same port');
-  console.log('  (forward that port on your router if this machine is behind one).');
+  if (!publicHost) {
+    console.log('  From the internet, use your public IP or domain with the same port');
+    console.log('  (forward that port on your router if this machine is behind one).');
+  }
   line();
   startStatus();
   return true;

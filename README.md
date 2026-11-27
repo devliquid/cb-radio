@@ -60,10 +60,30 @@ Every copy of the app connects to one **base station** (a small relay server). E
 **On your own Windows server: Breaker40-BaseStation.exe.** This is the relay as one file that needs nothing installed. Copy it to the server and double-click it. A console window opens showing the addresses people should enter, plus a line each time someone joins, leaves or changes channel. See [The base station exe](#the-base-station-exe).
 
 **Over the internet, always on, without a Windows server:** deploy the `server/` folder to any Node host that supports WebSockets, such as Render, Railway, Fly.io or a small VPS.
-- Render: create a new **Web Service** from a repo containing this project, set the root directory to `server`, the build command to `npm install`, and the start command to `npm start`. It gives you an address like `https://my-cb.onrender.com`. Everyone enters `wss://my-cb.onrender.com` in SETUP.
+- Render: the repo has a `render.yaml` blueprint, so setup is a few clicks. See [Hosting the base station on Render](#hosting-the-base-station-on-render).
 - On a Linux server, use `Breaker40-BaseStation-linux-x64` from the Releases page. Or, if Node is installed, run `npm install` in the `server` folder, then `node relay.js`. Both use the same settings file, flags and typed menu as the exe.
 
 To make that the address every new install starts with, change `server:` in `DEFAULTS` at the top of `renderer/app.js` and rebuild.
+
+## Hosting the base station on Render
+
+[Render](https://render.com) runs the base station for you, always on, with a secure `wss://` address and nothing to forward on your router.
+
+1. In the Render dashboard, click **New** > **Blueprint**.
+2. Connect your GitHub account if Render asks, and pick the `cb-radio` repository (your own fork works too).
+3. Render reads `render.yaml` and shows one web service, **breaker40-base-station**. Click **Apply**.
+4. When the deploy finishes, the service page shows its address, such as `https://breaker40-base-station.onrender.com`. The log also prints the address to use in the radio.
+5. In each radio's SETUP, enter `wss://breaker40-base-station.onrender.com` (or just `breaker40-base-station.onrender.com`; the app adds `wss://`), click **Connect**, and **Save to list** it if you like.
+
+If that service name is already taken, Render adds a few letters to the address. Use the address your service page shows.
+
+Things to know about the free plan:
+
+- It goes to sleep when nobody has used it for about 15 minutes. The first person to connect after that waits up to a minute while it wakes. The radio keeps retrying on its own, so just leave it on.
+- Everyone is briefly disconnected whenever Render redeploys or restarts the service. The radios reconnect by themselves.
+- A paid instance stays awake all the time. Change `plan: free` in `render.yaml`, or change the instance type on the service's settings page.
+
+Render redeploys automatically when something in `server/` changes on `main`. Changes to the radio app alone don't trigger a redeploy.
 
 ## The base station exe
 
