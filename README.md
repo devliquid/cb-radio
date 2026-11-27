@@ -13,13 +13,13 @@ Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases
 | `Breaker40-CB-Setup-<version>.exe` | Windows: the radio, as an installer |
 | `Breaker40-CB-Portable-<version>.exe` | Windows: the radio as one file that runs without installing |
 | `Breaker40-BaseStation.exe` | Windows: the base station |
-| `Breaker40-CB-<version>-linux-x64.AppImage` | Linux: the radio as one file for any distro (`-arm64` for ARM) |
+| `Breaker40-CB-<version>-linux-x86_64.AppImage` | Linux: the radio as one file for any distro (`-arm64` for ARM) |
 | `breaker40-cb_<version>_amd64.deb` | Linux: the radio for Ubuntu, Debian and Mint (`_arm64` for ARM) |
 | `Breaker40-BaseStation-linux-x64` | Linux: the base station (`-arm64` for ARM, such as a Raspberry Pi 4 or 5 on a 64-bit OS) |
 
 **On Linux:**
 - **AppImage:** run `chmod +x Breaker40-CB-*.AppImage`, then double-click it or run `./Breaker40-CB-*.AppImage`. If it says FUSE is missing, install it (`sudo apt install libfuse2t64`, or `libfuse2` on Ubuntu 22.04 and older), or run it with `--appimage-extract-and-run`.
-- **.deb:** run `sudo apt install ./breaker40-cb_*.deb`. It shows up in the app menu as Breaker 40 CB.
+- **.deb:** run `sudo apt install ./breaker40-cb_*.deb`. It shows up in the app menu as Breaker 40 CB, or you can run `breaker40-cb` from a terminal. It installs to `/opt/Breaker40CB`.
 - **Base station:** run `chmod +x Breaker40-BaseStation-linux-x64`, then `./Breaker40-BaseStation-linux-x64`. It works the same as the Windows exe (see [The base station exe](#the-base-station-exe)). Ports below 1024 need root, so stick to ports like 7140.
 
 ## What's on the radio
