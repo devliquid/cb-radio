@@ -21,6 +21,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 function run(args = [], env = {}) {
   const p = spawn(exe, args, { cwd: os.tmpdir(), env: { ...process.env, PORT: '', HOST: '', ...env } });
   p.out = '';
+  p.seen = 0; // until() only looks at output after its last match, so a repeated prompt isn't matched early
   p.stdout.on('data', (d) => { p.out += d; });
   p.stderr.on('data', (d) => { p.out += d; });
   p.done = new Promise((r) => p.on('exit', (code) => r(code)));
@@ -28,10 +29,12 @@ function run(args = [], env = {}) {
 }
 async function until(p, text, ms = 8000) {
   const end = Date.now() + ms;
-  while (!p.out.includes(text)) {
+  let at;
+  while ((at = p.out.indexOf(text, p.seen)) < 0) {
     if (Date.now() > end) throw new Error(`timed out waiting for "${text}". Output so far:\n${p.out}`);
     await wait(50);
   }
+  p.seen = at + text.length;
 }
 function client(url, channel, handle) {
   return new Promise((res, rej) => {
