@@ -43,7 +43,7 @@ Each PC keeps its own settings, and they're still there after a restart.
 
 - **Your handle:** the name others see when you talk.
 - **Saved base stations:** type an address, give it a name ("My server", "Home LAN") and click **Save to list**. Picking a station from the list connects to it straight away. **Delete** removes the selected one.
-- **Base station address:** `ws://ip:port`, `wss://domain`, or just an IP (the app fills in port 7140). Click **Connect** to switch.
+- **Base station address:** starts out as the hosted base station, `wss://breaker40-base-station.onrender.com`, so a new install is on the air right away. To use another one, enter `ws://ip:port`, `wss://domain`, just a domain name (the app adds `wss://`), or just an IP (the app adds port 7140), and click **Connect**.
 - **Be the base station:** run the relay on this PC, on any port.
 - **Microphone / Speaker:** choose devices, or leave them on Windows default. If a chosen device is unplugged, the app falls back to the default.
 - **Mic level and Mic gain:** talk normally and adjust the gain until the level bar sits in the green, below the dashed line. That's the level other people will hear.
@@ -52,6 +52,8 @@ Each PC keeps its own settings, and they're still there after a restart.
 ## How people find each other
 
 Every copy of the app connects to one **base station** (a small relay server). Everyone using the same base-station address can hear each other.
+
+**The easy way:** do nothing. Every radio starts out connected to the hosted base station at `wss://breaker40-base-station.onrender.com`, so everyone who installs the app can already hear each other. Radios updated from 1.0.2 or earlier that still had the old default (`ws://localhost:7140`) move to it too, unless that PC is hosting.
 
 **On the same Wi-Fi or LAN:** one person opens SETUP and ticks **Host on port 7140**. The app lists addresses such as `ws://192.168.1.20:7140`. Everyone else enters that address and clicks **Connect**. Allow the app through the Windows Firewall if Windows asks.
 
@@ -63,7 +65,7 @@ Every copy of the app connects to one **base station** (a small relay server). E
 - Render: the repo has a `render.yaml` blueprint, so setup is a few clicks. See [Hosting the base station on Render](#hosting-the-base-station-on-render).
 - On a Linux server, use `Breaker40-BaseStation-linux-x64` from the Releases page. Or, if Node is installed, run `npm install` in the `server` folder, then `node relay.js`. Both use the same settings file, flags and typed menu as the exe.
 
-To make that the address every new install starts with, change `server:` in `DEFAULTS` at the top of `renderer/app.js` and rebuild.
+To make a different address the one every new install starts with, change `server:` in `DEFAULTS` at the top of `renderer/app.js` and rebuild.
 
 ## Hosting the base station on Render
 

@@ -18,7 +18,7 @@ const MAX_TX_MS = 3 * 60_000; // time-out timer, like a real rig
 // ---------- settings ----------
 const DEFAULTS = {
   handle: '',
-  server: 'ws://localhost:7140',
+  server: 'wss://breaker40-base-station.onrender.com', // the hosted base station on Render
   volume: 0.65,
   squelch: 0.35,
   channel: 19,
@@ -35,6 +35,8 @@ const settings = (() => {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('breaker40') || '{}') }; }
   catch { return { ...DEFAULTS }; }
 })();
+// Installs from 1.0.2 and earlier saved the old default, localhost. Unless this PC hosts, move them to the new default.
+if (settings.server === 'ws://localhost:7140' && !settings.host) settings.server = DEFAULTS.server;
 function save() { try { localStorage.setItem('breaker40', JSON.stringify(settings)); } catch {} }
 const handle = () => settings.handle || 'Unknown';
 
