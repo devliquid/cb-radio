@@ -49,13 +49,22 @@ jobs:
       - name: Test the base station executable
         run: npm run test:exe
 
+      # electron-builder's bundled fpm (which makes the .deb) is x86-only, so ARM uses the system's
+      - name: Install fpm (arm64)
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev build-essential
+          sudo gem install fpm --no-document
+          echo "USE_SYSTEM_FPM=true" >> "$GITHUB_ENV"
+
       - name: Build the radio (AppImage and .deb)
         run: npm run dist:linux -- --publish never
 
       - name: Install what the smoke tests need
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth pulseaudio
+          sudo apt-get install -y xvfb xauth pulseaudio libfuse2t64
 
       # Start the base station, then open each build of the radio, connect it to the base station,
       # open a fake mic, and take a screenshot.
@@ -89,7 +98,8 @@ jobs:
 
           appimage=$(ls dist/*.AppImage)
           chmod +x "$appimage"
-          APPIMAGE_EXTRACT_AND_RUN=1 check appimage "$appimage"
+          # run it the way people do: mounted with FUSE, through the launcher
+          check appimage "$appimage"
 
           sudo apt-get install -y ./dist/*.deb
           check deb /opt/"Breaker 40 CB"/breaker40-cb

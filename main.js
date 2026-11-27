@@ -4,9 +4,7 @@ const os = require('os');
 const { startServer } = require('./server/server');
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
-// An AppImage can't set up Chromium's sandbox helper, and Ubuntu 24.04+ blocks the fallback, so it
-// would crash on start. The app only loads its own local files. The .deb installs the helper and keeps it.
-if (process.platform === 'linux' && process.env.APPIMAGE) app.commandLine.appendSwitch('no-sandbox');
+// Linux AppImage: --no-sandbox is added by the launcher script from build/after-pack.js.
 if (process.env.CB_FAKE_MIC) app.commandLine.appendSwitch('use-fake-device-for-media-stream');
 
 let win = null;

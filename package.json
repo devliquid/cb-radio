@@ -27,6 +27,7 @@
   "build": {
     "appId": "com.breaker40.cb",
     "productName": "Breaker 40 CB",
+    "afterPack": "build/after-pack.js",
     "files": [
       "main.js",
       "preload.js",
