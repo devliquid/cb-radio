@@ -1,0 +1,49 @@
+{
+  "name": "breaker40-cb",
+  "productName": "Breaker 40 CB",
+  "version": "1.0.0",
+  "description": "A 40-channel CB radio for your desktop. Push to talk with anyone else running the app.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server/server.js",
+    "test": "node test/relay-test.js",
+    "dist": "electron-builder --win portable nsis"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.breaker40.cb",
+    "productName": "Breaker 40 CB",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**",
+      "server/**",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "portable": {
+      "artifactName": "Breaker40-CB-Portable-${version}.exe"
+    },
+    "nsis": {
+      "artifactName": "Breaker40-CB-Setup-${version}.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <title>Breaker 40 CB</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="stage">
+
+    <!-- coiled mic cord, drawn behind everything -->
+    <svg id="cord" width="1200" height="600" viewBox="0 0 1200 600" aria-hidden="true"></svg>
+
+    <div id="radio">
+      <div class="bracket"><span class="thumb left"></span><span class="thumb right"></span></div>
+      <div class="case">
+        <div class="trim">
+          <div class="brand">BREAKER<b>40</b></div>
+          <div class="tagline">40 CHANNEL CITIZENS BAND TRANSCEIVER · AM</div>
+          <div class="screws"><i></i><i></i></div>
+        </div>
+
+        <div class="face">
+          <div class="col knobs">
+            <div class="knob-wrap">
+              <div class="knob small" id="knobVol" tabindex="0" aria-label="Volume"><div class="cap"><span class="mark"></span></div></div>
+              <label>VOLUME</label>
+            </div>
+            <div class="knob-wrap">
+              <div class="knob small" id="knobSq" tabindex="0" aria-label="Squelch"><div class="cap"><span class="mark"></span></div></div>
+              <label>SQUELCH</label>
+            </div>
+          </div>
+
+          <div class="col window">
+            <div class="glass">
+              <div class="meter">
+                <svg id="meter" viewBox="0 0 200 120"></svg>
+              </div>
+              <div class="lcd">
+                <div class="lamps">
+                  <span class="lamp" id="lampRx">RX</span>
+                  <span class="lamp" id="lampTx">TX</span>
+                  <span class="lamp" id="lampNet">NET</span>
+                  <span class="lamp" id="lampScan">SCAN</span>
+                </div>
+                <div class="digits-row">
+                  <span class="ch-tag">CH</span>
+                  <svg id="digits" viewBox="0 0 140 110"></svg>
+                </div>
+                <div class="freq" id="freq">27.185 MHz</div>
+              </div>
+              <div class="ticker"><span id="ticker">WARMING UP…</span></div>
+              <div class="band" id="band" title="Band activity: green = people listening, red = someone talking. Click to tune."></div>
+            </div>
+          </div>
+
+          <div class="col chan">
+            <div class="detents" id="detents"></div>
+            <div class="knob big" id="knobCh" tabindex="0" aria-label="Channel selector"><div class="cap"><span class="mark"></span></div></div>
+            <label>CHANNEL</label>
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button class="key red" id="btn9" title="Channel 9: emergency">CH 9</button>
+          <button class="key" id="btn19" title="Channel 19: the highway channel">CH 19</button>
+          <button class="key toggle" id="btnScan">SCAN</button>
+          <button class="key toggle" id="btnRoger" title="Play a roger beep when you let go of the mic">ROGER</button>
+          <span class="spacer"></span>
+          <span class="handle-plate">HANDLE <b id="handlePlate">—</b></span>
+          <button class="key" id="btnSetup">SETUP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- hand mic -->
+    <div id="mic">
+      <div class="mic-hook"></div>
+      <div class="mic-body">
+        <div class="grille"></div>
+        <div class="mic-brand">BREAKER</div>
+        <button id="ptt" aria-label="Push to talk">
+          <span>PUSH</span><span>TO</span><span>TALK</span>
+        </button>
+        <div class="mic-hint">or hold <kbd id="pttHint">Space</kbd></div>
+      </div>
+      <div class="mic-strain"></div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- setup drawer -->
+  <div id="setup" hidden>
+    <div class="sheet">
+      <h2>Radio setup</h2>
+      <label class="field">
+        <span>Your handle (what others see when you talk)</span>
+        <input id="inHandle" maxlength="16" spellcheck="false" autocomplete="off">
+      </label>
+      <div class="field">
+        <span>Saved base stations</span>
+        <div class="row">
+          <select id="inStations" class="grow"></select>
+          <button id="btnDelStation" class="ghost">Delete</button>
+        </div>
+      </div>
+      <label class="field">
+        <span>Base station address (everyone who wants to talk must use the same one)</span>
+        <input id="inServer" spellcheck="false" autocomplete="off" placeholder="ws://192.168.1.20:7140  or  wss://cb.example.com">
+      </label>
+      <div class="row">
+        <button id="btnConnect" class="primary">Connect</button>
+        <input id="inStationName" class="grow" maxlength="24" spellcheck="false" autocomplete="off" placeholder="Name it, e.g. My server">
+        <button id="btnSaveStation" class="ghost">Save to list</button>
+      </div>
+      <div id="connState" class="muted state"></div>
+
+      <hr>
+      <h3>Be the base station</h3>
+      <p class="muted">Run the relay on this computer so friends can connect to you. On the same Wi-Fi, they use one of the addresses below. Over the internet, forward the port on your router or put the relay on a server (see the README).</p>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="inHost"> Host on port</label>
+        <input id="inPort" class="port" value="7140" inputmode="numeric">
+      </div>
+      <div id="hostInfo" class="muted"></div>
+
+      <hr>
+      <h3>Audio</h3>
+      <label class="field">
+        <span>Microphone</span>
+        <select id="inMic"></select>
+      </label>
+      <div class="field">
+        <span>Mic level: talk normally and aim for the green, not the red</span>
+        <div class="levelbar"><i id="micBar"></i></div>
+      </div>
+      <label class="field">
+        <span>Mic gain <b id="gainVal">100%</b></span>
+        <input type="range" id="inGain" min="0.2" max="3" step="0.05">
+      </label>
+      <label class="field">
+        <span>Speaker</span>
+        <select id="inSpeaker"></select>
+      </label>
+
+      <hr>
+      <h3>Push-to-talk key</h3>
+      <div class="row">
+        <span class="keycap" id="pttKeyLabel">Space</span>
+        <button id="btnSetKey" class="ghost">Change…</button>
+        <span id="keyHint" class="muted"></span>
+      </div>
+
+      <div class="row end">
+        <button id="btnClose" class="primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
