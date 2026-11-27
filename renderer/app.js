@@ -110,8 +110,10 @@ function showDigits(str) {
 // ============================================================
 const meterSvg = $('#meter');
 let needle;
+// Needle pivot. It sits inside the 200x120 viewBox so the needle visibly comes out of the hub.
+const METER_CX = 100, METER_CY = 116;
 (function buildMeter() {
-  const cx = 100, cy = 128, r = 100;
+  const cx = METER_CX, cy = METER_CY, r = 100;
   const a0 = -50, a1 = 50;
   const pt = (deg, rad) => {
     const a = (deg - 90) * Math.PI / 180;
@@ -145,16 +147,20 @@ let needle;
   }
   s += `<text x="16" y="24" font-size="10" font-weight="900" fill="#1d1a14" font-family="Arial">S</text>`;
   s += `<text x="14" y="70" font-size="7" font-weight="700" fill="#1d1a14" font-family="Arial">RF</text>`;
-  s += `<text x="100" y="101" font-size="8" font-weight="700" fill="#5b4d33" text-anchor="middle" font-family="Arial" letter-spacing="2">SIGNAL · POWER</text>`;
-  s += `<g id="needle"><line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - r + 10}" stroke="#111" stroke-width="2"/></g>`;
-  s += `<circle cx="${cx}" cy="${cy - 6}" r="14" fill="#1b1b1b"/>`;
+  s += `<text x="100" y="${cy - 17}" font-size="8" font-weight="700" fill="#5b4d33" text-anchor="middle" font-family="Arial" letter-spacing="2">SIGNAL · POWER</text>`;
+  // The needle's tip stops just past the scale arc. The hub is drawn on top, centred on the pivot.
+  s += `<g id="needle"><line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - r + 12}" stroke="#111" stroke-width="2" stroke-linecap="round"/></g>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="11" fill="#1b1b1b"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="3" fill="#3a3a3a"/>`;
   meterSvg.innerHTML = s;
   needle = meterSvg.querySelector('#needle');
-  needle.style.transformOrigin = `${cx}px ${cy}px`;
 })();
 let meterVal = 0;
+// v is 0..1 across the scale. rotate() carries its own centre, so nothing else may set a
+// transform-origin on the needle: Chromium would apply both and swing it off the dial.
 function setNeedle(v) {
-  needle.setAttribute('transform', `rotate(${(-50 + 100 * v).toFixed(2)} 100 128)`);
+  v = Math.max(0, Math.min(1, v));
+  needle.setAttribute('transform', `rotate(${(-50 + 100 * v).toFixed(2)} ${METER_CX} ${METER_CY})`);
 }
 
 // ============================================================

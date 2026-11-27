@@ -1,7 +1,7 @@
 {
   "name": "breaker40-cb",
   "productName": "Breaker 40 CB",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A 40-channel CB radio for your desktop. Push to talk with anyone else running the app.",
   "main": "main.js",
   "author": "devliquid <78886688+devliquid@users.noreply.github.com>",
