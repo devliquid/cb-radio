@@ -8,14 +8,18 @@
     "start": "electron .",
     "server": "node server/server.js",
     "test": "node test/relay-test.js",
-    "dist": "electron-builder --win portable nsis"
+    "test:exe": "node test/basestation-exe-test.js",
+    "dist": "electron-builder --win portable nsis",
+    "dist:relay": "node build/build-relay.js",
+    "dist:all": "npm run dist && npm run dist:relay"
   },
   "dependencies": {
     "ws": "^8.18.0"
   },
   "devDependencies": {
     "electron": "^33.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.28.2"
   },
   "build": {
     "appId": "com.breaker40.cb",

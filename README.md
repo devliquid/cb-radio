@@ -39,11 +39,41 @@ Every copy of the app connects to one **base station** (a small relay server). E
 
 **Over the internet, from your own PC:** host as above, then forward TCP port 7140 on your router to that PC. Friends connect to `ws://YOUR-PUBLIC-IP:7140`.
 
-**Over the internet, always on (recommended):** deploy the `server/` folder to any Node host that supports WebSockets, such as Render, Railway, Fly.io or a small VPS.
+**On your own Windows server: Breaker40-BaseStation.exe.** This is the relay as one file that needs nothing installed. Copy it to the server and double-click it. A console window opens showing the addresses people should enter, plus a line each time someone joins, leaves or changes channel. See [The base station exe](#the-base-station-exe).
+
+**Over the internet, always on, without a Windows server:** deploy the `server/` folder to any Node host that supports WebSockets, such as Render, Railway, Fly.io or a small VPS.
 - Render: create a new **Web Service** from a repo containing this project, set the root directory to `server`, the build command to `npm install`, and the start command to `npm start`. It gives you an address like `https://my-cb.onrender.com`. Everyone enters `wss://my-cb.onrender.com` in SETUP.
-- The server reads the `PORT` environment variable and listens on 7140 by default.
+- On Linux, run `npm install` in the `server` folder, then `node relay.js`. It uses the same settings file, flags and typed menu as the exe.
 
 To make that the address every new install starts with, change `server:` in `DEFAULTS` at the top of `renderer/app.js` and rebuild.
+
+## The base station exe
+
+`Breaker40-BaseStation.exe` listens on **port 7140** on **every network of the machine** (`0.0.0.0`) unless you change it. There are three ways to change the settings:
+
+1. **While it's running:** type `s` and press Enter. It asks for the port (Enter keeps the current one), then lists the IP choices:
+   - `0.0.0.0`: every network on the machine. This is the usual choice.
+   - `127.0.0.1`: this machine only, for testing.
+   - Each of the machine's own addresses, to listen on just that network.
+
+   It saves your choices and restarts on the new settings. Other commands: `r` restarts, `i` shows the addresses again, `q` quits.
+2. **The settings file:** `relay-settings.json` sits next to the exe and is created on first run:
+   ```json
+   { "port": 7140, "ip": "0.0.0.0" }
+   ```
+   Edit it and restart the exe. If the exe's folder is read-only, the file goes in `%APPDATA%\Breaker40BaseStation\` instead.
+3. **Command-line flags,** handy for a shortcut or a scheduled task:
+   ```powershell
+   .\Breaker40-BaseStation.exe --port 7155 --ip 0.0.0.0
+   .\Breaker40-BaseStation.exe --port 7155 --save    # also write it to the settings file
+   ```
+   The `PORT` and `HOST` environment variables work too. Flags win over environment variables, and environment variables win over the file.
+
+If the port is taken, or the IP isn't one of the machine's own, the exe explains what's wrong and asks for new settings.
+
+The first time it runs, Windows Firewall asks whether to allow it. Allow it on the networks people will connect from. For people outside your network, forward the port on your router to the server.
+
+To run it with no one logged in, start it at boot with Task Scheduler ("Run whether user is logged on or not") using the flags above. With no console attached it skips the typed menu and just runs.
 
 ## Building
 
@@ -52,6 +82,9 @@ npm install
 npm start          # run it
 npm test           # relay server checks
 npm run dist       # builds dist\Breaker40-CB-Portable-1.0.0.exe and dist\Breaker40-CB-Setup-1.0.0.exe
+npm run dist:relay # builds dist\Breaker40-BaseStation.exe
+npm run dist:all   # all three
+npm run test:exe   # checks the base station exe (build it first)
 npm run server     # run a base station without the radio window
 ```
 
@@ -63,6 +96,8 @@ Notes:
 
 - `main.js`: the Electron window, plus the built-in base station when you host.
 - `server/server.js`: the relay. It tracks who is on which channel, passes audio only to people on the same channel, and broadcasts the band activity.
+- `server/relay.js`: the stand-alone base station around it: the settings file, flags, console status and typed menu.
+- `build/build-relay.js`: bundles `relay.js` with esbuild and wraps it in Node's single-executable format to make the base station exe.
 - `renderer/`: the radio itself. Your voice is sent as 8 kHz mono audio, about 16 KB/s while you talk. Incoming audio goes through a band-pass filter, light distortion and static to sound like AM CB.
 
 There is no account system or encryption. Anyone with the base-station address can listen and talk, just like real CB.

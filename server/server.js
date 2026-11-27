@@ -24,7 +24,7 @@ function sanitize(h) {
   return s || 'Unknown';
 }
 
-function startServer(port = 7140, host = '0.0.0.0') {
+function startServer(port = 7155, host = '0.0.0.0') {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' });
     res.end('Breaker 40 CB base station is on the air.\n');
@@ -124,12 +124,25 @@ function startServer(port = 7140, host = '0.0.0.0') {
     }
   }, 20_000);
 
+  // ws re-emits the http server's errors; listen failures are reported through the promise below
+  wss.on('error', () => {});
+
   return new Promise((resolve, reject) => {
-    server.once('error', reject);
+    const fail = (err) => {
+      clearInterval(heartbeat);
+      wss.close();
+      reject(err);
+    };
+    server.once('error', fail);
     server.listen(port, host, () => {
-      server.off('error', reject);
+      server.off('error', fail);
       resolve({
         port: server.address().port,
+        stats: () => {
+          const counts = new Array(40).fill(0);
+          for (const c of clients) if (c.channel) counts[c.channel - 1]++;
+          return { people: clients.size, counts };
+        },
         close: () => new Promise((done) => {
           clearInterval(heartbeat);
           for (const c of clients) c.ws.terminate();
@@ -143,12 +156,5 @@ function startServer(port = 7140, host = '0.0.0.0') {
 
 module.exports = { startServer };
 
-if (require.main === module) {
-  const port = Number(process.env.PORT) || 7140;
-  startServer(port).then(({ port }) => {
-    console.log(`Breaker 40 base station listening on port ${port}`);
-  }).catch((err) => {
-    console.error('Could not start the base station:', err.message);
-    process.exit(1);
-  });
-}
+// `node server.js` runs the stand-alone base station with its settings file and console.
+if (require.main === module) require('./relay').main();

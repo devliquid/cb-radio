@@ -19,5 +19,7 @@ app.whenReady().then(async () => {
   await new Promise((r) => setTimeout(r, 400));
   const img = await win.webContents.capturePage({ x: 0, y: 0, width: 512, height: 512 });
   fs.writeFileSync(path.join(__dirname, 'icon.png'), img.resize({ width: 512, height: 512 }).toPNG());
+  // 256 px copy: Windows .ico files top out at 256 (used for the base station exe)
+  fs.writeFileSync(path.join(__dirname, 'icon-256.png'), img.resize({ width: 256, height: 256, quality: 'best' }).toPNG());
   app.quit();
 });
