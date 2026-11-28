@@ -33,6 +33,7 @@ Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases
 | **CH 9 / CH 19** | Jump to the emergency channel or the highway channel. |
 | **SCAN** | Sweeps the band and stops on any channel where someone is talking. |
 | **ROGER** | Sends a roger beep when you let go of the mic. |
+| **ECHO** and slider | Echo mic: everyone on the channel hears your voice repeat. The slider sets how much, from a light slap to a long, ringing echo. Moving it turns echo on. You don't hear your own echo, just like with a real echo mic. |
 | Meter | S-meter on receive, RF power on transmit. |
 | Band strip | All 40 channels: green means people are listening, red means someone is talking. Click one to tune to it. |
 | **SETUP** | Everything you can change. See below. |

@@ -23,6 +23,8 @@ const DEFAULTS = {
   squelch: 0.35,
   channel: 19,
   roger: true,
+  echo: false,
+  echoAmount: 0.5,     // 0..1
   host: false,
   port: 7140,
   micId: '',
@@ -302,6 +304,7 @@ $('#handlePlate').textContent = handle().toUpperCase();
 // ============================================================
 let ctx = null;
 let rxIn, rxGate, master, noiseGain, rxAnalyser, capNode, micSrc, micStream, micGainNode;
+let echoIn, echoWet, echoFb;
 const players = new Map();   // sender id -> next play time
 let rxPlayingUntil = 0;
 
@@ -384,7 +387,33 @@ async function openMic() {
   micGainNode = ctx.createGain();
   applyMicGain();
   micSrc.connect(hp).connect(lp).connect(comp).connect(micGainNode).connect(capNode);
+  buildEcho();
+  micGainNode.connect(echoIn);
   fillDevices();
+}
+
+// Echo mic: a delay line with feedback, mixed into what you transmit.
+// Only fed while keyed, so it never repeats what you said before keying.
+function buildEcho() {
+  if (echoIn) return;
+  echoIn = ctx.createGain(); echoIn.gain.value = 0;
+  const delay = ctx.createDelay(1);
+  delay.delayTime.value = 0.22;
+  echoFb = ctx.createGain();
+  echoWet = ctx.createGain();
+  const tone = bq("lowpass", 2400, 0.7);   // each repeat a little duller, like a tape echo
+  echoIn.connect(delay).connect(tone).connect(echoFb).connect(delay);
+  tone.connect(echoWet).connect(capNode);
+  applyEcho();
+}
+function applyEcho() {
+  if (!echoWet) return;
+  const a = settings.echo ? settings.echoAmount : 0;
+  const t = ctx.currentTime;
+  echoWet.gain.setTargetAtTime(0.85 * a, t, 0.03);
+  // after unkeying, drop the feedback so the tail dies out instead of starting the next over
+  echoFb.gain.setTargetAtTime(transmitting ? 0.7 * a : 0, t, 0.03);
+  echoIn.gain.setTargetAtTime(transmitting && a > 0 ? 1 : 0, t, 0.01);
 }
 
 function applyMicGain() {
@@ -624,6 +653,7 @@ function startTx() {
   updateNoise();
   sendJSON({ type: 'tx', on: true });
   capNode.port.postMessage({ active: true });
+  applyEcho();
   txTimer = setTimeout(() => { stopTx(); toast('Time-out: mic unkeyed after 3 minutes'); }, MAX_TX_MS);
   refreshTicker();
 }
@@ -632,6 +662,7 @@ function stopTx(silent = false) {
   transmitting = false;
   clearTimeout(txTimer);
   capNode.port.postMessage({ active: false });
+  applyEcho();
   if (connected && !silent) {
     if (settings.roger) for (const f of rogerFrames()) ws.send(f);
     sendJSON({ type: 'tx', on: false });
@@ -649,7 +680,8 @@ ptt.addEventListener('pointerdown', (e) => { ptt.setPointerCapture(e.pointerId);
 ptt.addEventListener('pointerup', () => stopTx());
 ptt.addEventListener('pointercancel', () => stopTx());
 ptt.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
-const typing = () => /INPUT|SELECT|TEXTAREA/.test(document.activeElement && document.activeElement.tagName);
+// Sliders do not count as typing, so push-to-talk still works after moving one.
+const typing = () => { const el = document.activeElement; return !!el && /INPUT|SELECT|TEXTAREA/.test(el.tagName) && el.type !== 'range'; };
 let capturingKey = false;
 window.addEventListener('keydown', (e) => {
   if (capturingKey) return;
@@ -694,6 +726,25 @@ rogerBtn.addEventListener('click', () => {
   settings.roger = !settings.roger; save();
   rogerBtn.classList.toggle('on', settings.roger);
   toast(settings.roger ? 'Roger beep on' : 'Roger beep off');
+});
+const echoBtn = $('#btnEcho'), echoSlider = $('#echoAmount');
+function showEcho() {
+  echoBtn.classList.toggle('on', settings.echo);
+  $('#echoBox').classList.toggle('off', !settings.echo);
+  echoSlider.value = Math.round(settings.echoAmount * 100);
+  echoSlider.title = `Echo amount: ${echoSlider.value}%`;
+}
+showEcho();
+echoBtn.addEventListener('click', () => {
+  settings.echo = !settings.echo; save();
+  showEcho(); applyEcho();
+  toast(settings.echo ? `Echo on · ${Math.round(settings.echoAmount * 100)}%` : 'Echo off');
+});
+echoSlider.addEventListener('input', () => {
+  settings.echoAmount = Number(echoSlider.value) / 100;
+  if (!settings.echo && settings.echoAmount > 0) settings.echo = true;   // moving the slider turns echo on
+  save(); showEcho(); applyEcho();
+  toast(`Echo ${echoSlider.value}%`);
 });
 
 // ============================================================
