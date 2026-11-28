@@ -30,7 +30,7 @@ Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases
 | Band screen | Shows the band you're on (10, 11 or 12 meter) and its frequency range. |
 | **BAND** switch: 10 / 11 / 12 | Picks the band, each with its own 40 channels (120 in all). **11 m** is CB, 26.965–27.405 MHz. **10 m** is 28.305–28.695 MHz in 10 kHz steps. **12 m** is 24.890–24.9875 MHz in 2.5 kHz steps. You only hear people on the same band and channel. |
 | **VOLUME** | Speaker volume. |
-| **SQUELCH** | Turn it all the way down to hear open-band static. Turn it up for silence between transmissions. |
+| **SQUELCH** | Turn it all the way down to hear open-band static, with faint far-away voices under it now and then (and faint Morse code on 12 meter), like skip on a real radio. They're only background sounds. Turn it up for silence between transmissions. |
 | **USB / OFF / LSB** switch | Sideband. **OFF** is AM, like most CB talk. **USB** and **LSB** are single sideband (upper and lower). Sideband radios only hear each other properly on the same sideband: the other one comes out back to front, an AM radio turns sideband into garble, and a sideband radio hears AM with a carrier whistle. The mode shows next to the frequency. |
 | **CLARIFIER** | Fine-tunes single sideband voices. Each sideband station is a little off frequency, so its voice sounds high-pitched or low-pitched until you turn the clarifier to where it sounds natural. Double-click it to centre it. |
 | **PUSH TO TALK** | Hold to talk. Holding **Space** does the same. Like a real rig, you can't hear while you're keyed up, and the mic unkeys after 3 minutes. |

@@ -22,6 +22,8 @@ How loud the speaker is. Drag the knob up or down, scroll the mouse wheel over i
 
 Turn it all the way down to hear the static of an open band. Turn it up for silence between transmissions.
 
+With the squelch open, you also hear what's far away under the static, like skip on a real radio: faint, distant voices now and then on any channel, fading in and out. On the 12 meter band you also hear faint Morse code. These are only background sounds, and nobody is really there. They go quiet when someone on your channel talks, and stop when you turn the squelch up.
+
 ### USB / OFF / LSB switch
 
 The sideband switch. **OFF** is AM, which is how most CB talk works. **USB** and **LSB** are single sideband (upper and lower), a narrower, cleaner-sounding mode.

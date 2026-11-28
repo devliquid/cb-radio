@@ -289,6 +289,7 @@ function setBand(b, quiet = false) {
   if (!BANDS[b] || b === settings.band) return;
   if (transmitting) stopTx(true);
   cancelRogerTail(true);
+  stopFar();
   stopScan();
   settings.band = b; save();
   talkers.clear(); players.clear(); lastHeard = '';
@@ -369,6 +370,7 @@ $('#handlePlate').textContent = handle().toUpperCase();
 // ============================================================
 let ctx = null;
 let rxIn, rxGate, master, noiseGain, rxAnalyser, capNode, micSrc, micStream, micGainNode;
+let farBus;                  // the faint far-away sounds under the static
 let echoIn, echoWet, echoFb;
 const players = new Map();   // sender id -> next play time
 let rxPlayingUntil = 0;
@@ -410,6 +412,9 @@ async function initAudio() {
   noiseGain = ctx.createGain(); noiseGain.gain.value = 0;
   noise.connect(nbp).connect(noiseGain).connect(rxGate);
   noise.start();
+  farBus = ctx.createGain(); farBus.gain.value = 0;
+  farBus.connect(rxGate);
+  setTimeout(prepareFar, 1200);
 
   applyVolume();
   updateNoise();
@@ -512,6 +517,52 @@ function updateNoise() {
   if (!ctx) return;
   const target = transmitting ? 0 : rxBusy() ? 0.02 : idleNoiseLevel();
   noiseGain.gain.setTargetAtTime(target, ctx.currentTime, 0.03);
+  // the far-away sounds sit under the static, follow it, and go quiet when anyone is on the channel
+  if (farBus) farBus.gain.setTargetAtTime(transmitting || rxBusy() ? 0 : idleNoiseLevel() * FAR_LEVEL, ctx.currentTime, 0.08);
+}
+
+// ---------- skip: faint voices (any band) and Morse code (12 m) far away ----------
+// With the squelch open you hear static, and now and then something faint and far off under it.
+// The 10 voice clips can turn up on any channel; on 12 m there are also 10 Morse clips.
+const FAR_LEVEL = 0.45;            // the far sounds' loudness, relative to the static
+let farClips = null, farSrc = null, farTimer = 0, farLast = -1;
+function prepareFar() {
+  if (farClips || !ctx || !window.SkipSounds) return;
+  const toBuf = (d) => { const b = ctx.createBuffer(1, d.length, RATE); b.getChannelData(0).set(d); return b; };
+  farClips = { voices: SkipSounds.voices(10).map(toBuf), morse: SkipSounds.morse(10).map(toBuf) };
+  scheduleFar(2, 6);
+}
+function scheduleFar(min = 4, max = 14) {
+  clearTimeout(farTimer);
+  farTimer = setTimeout(playFar, (min + Math.random() * (max - min)) * 1000);
+}
+function playFar() {
+  if (!ctx || !farClips) return;
+  if (farSrc || !squelchOpen() || transmitting || rxBusy()) { scheduleFar(2, 6); return; }
+  // on 12 m it's mostly Morse; everywhere else it's voices
+  const morse = settings.band === '12' && Math.random() < 0.7;
+  const pool = morse ? farClips.morse : farClips.voices;
+  let i = Math.floor(Math.random() * pool.length);
+  const key = (morse ? 100 : 0) + i;
+  if (key === farLast) { i = (i + 1) % pool.length; }
+  farLast = (morse ? 100 : 0) + i;
+  const src = ctx.createBufferSource();
+  src.buffer = pool[i];
+  src.playbackRate.value = 0.97 + Math.random() * 0.06;      // never quite the same twice
+  const g = ctx.createGain();
+  g.gain.value = 0.5 + Math.random() * 0.5;                  // some are fainter than others
+  src.connect(g).connect(farBus);
+  src.onended = () => { if (farSrc === src) { farSrc = null; scheduleFar(); } };
+  farSrc = src;
+  src.start();
+}
+// Changing channel or band leaves whatever was faintly there behind.
+function stopFar() {
+  if (!farSrc) return;
+  const src = farSrc;
+  farSrc = null;
+  try { src.stop(); } catch {}
+  if (farClips) scheduleFar(3, 9);
 }
 function burst(level, dur) {
   if (!ctx || transmitting) return;
@@ -743,6 +794,7 @@ function tune(ch, quiet = false) {
   if (ch === settings.channel && connected && !quiet) { showChannel(); return; }
   if (transmitting) stopTx(true);
   cancelRogerTail(true);
+  stopFar();
   settings.channel = ch;
   save();
   talkers.clear();
