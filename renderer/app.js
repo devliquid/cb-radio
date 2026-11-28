@@ -1341,10 +1341,14 @@ function drawCord() {
 const THEMES = {
   classic: { tagline: '10 · 11 · 12 METER TRANSCEIVER · 120 CHANNELS · AM / SSB' },
   base: { tagline: 'AM / SSB BASE STATION · 10 · 11 · 12 METER · 120 CHANNELS' },
+  army: { tagline: 'ARMY FIELD RADIO · 10 · 11 · 12 METER · 120 CH · AM / SSB' },
+  camo: { tagline: 'FIELD RADIO SET · 10 · 11 · 12 METER · 120 CH · AM / SSB' },
 };
 function applyTheme() {
   if (!THEMES[settings.theme]) settings.theme = 'classic';
   document.body.classList.toggle('theme-base', settings.theme === 'base');
+  document.body.classList.toggle('theme-camo', settings.theme === 'camo');
+  document.body.classList.toggle('theme-army', settings.theme === 'army');
   document.querySelector('.tagline').textContent = THEMES[settings.theme].tagline;
   buildMeter();
   drawCord();

@@ -765,3 +765,191 @@ body.theme-base #ptt::after {              /* the lock key beside it */
   pointer-events: none;
 }
 body.theme-base .mic-hint { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; text-align: center; color: #b9bdc3; }
+
+/* ============================================================
+   Themes: Army green and Army camouflage (field radio with a military handset)
+   ============================================================ */
+:is(body.theme-camo, body.theme-army) {
+  --label: #d8cf9f;
+  --amber: #c8d36a;
+  --led-red: #8dff6a;
+  --led-red-dim: rgba(141, 255, 106, 0.08);
+  --green: #b6ff5c;
+  --meter-ink: #9fe36d;
+  --meter-hot: #ffb347;
+  --meter-sub: #6fae4a;
+  --meter-inner: #6fae4a;
+  --meter-needle: #e8f5c8;
+  --stencil: "Stencil", "Arial Black", Impact, sans-serif;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255, 240, 200, 0.06), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 6px),
+    linear-gradient(#4a4131, #2a241a);
+}
+:is(body.theme-camo, body.theme-army) #digits { filter: drop-shadow(0 0 6px rgba(141,255,106,0.7)); }
+:is(body.theme-camo, body.theme-army) .freq, :is(body.theme-camo, body.theme-army) .ch-tag { text-shadow: 0 0 6px rgba(141,255,106,0.6); }
+:is(body.theme-camo, body.theme-army) .band-screen b, :is(body.theme-camo, body.theme-army) .band-screen span { text-shadow: 0 0 8px rgba(141,255,106,0.7); }
+:is(body.theme-camo, body.theme-army) .band-screen small { color: rgba(141,255,106,0.75); }
+:is(body.theme-camo, body.theme-army) .lcd, :is(body.theme-camo, body.theme-army) .band-screen { background: #031006; }
+:is(body.theme-camo, body.theme-army) #lampTx.on { background: #ff5a3c; box-shadow: 0 0 12px #ff5a3c; }
+
+/* woodland camouflage case */
+body.theme-camo .case {
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse 70px 34px at 6% 18%, #1d2113 96%, transparent 100%),
+    radial-gradient(ellipse 90px 40px at 22% 88%, #5a4630 96%, transparent 100%),
+    radial-gradient(ellipse 60px 46px at 34% 8%, #5a4630 96%, transparent 100%),
+    radial-gradient(ellipse 110px 38px at 47% 95%, #1d2113 96%, transparent 100%),
+    radial-gradient(ellipse 80px 50px at 58% 4%, #2e3b1e 96%, transparent 100%),
+    radial-gradient(ellipse 70px 30px at 70% 92%, #8a8456 96%, transparent 100%),
+    radial-gradient(ellipse 95px 44px at 83% 12%, #1d2113 96%, transparent 100%),
+    radial-gradient(ellipse 60px 40px at 96% 80%, #5a4630 96%, transparent 100%),
+    radial-gradient(ellipse 50px 28px at 12% 60%, #8a8456 96%, transparent 100%),
+    radial-gradient(ellipse 55px 60px at 99% 45%, #2e3b1e 96%, transparent 100%),
+    radial-gradient(ellipse 45px 70px at 1% 50%, #5a4630 96%, transparent 100%),
+    radial-gradient(ellipse 120px 60px at 40% 50%, #2e3b1e 96%, transparent 100%),
+    #556b2f;
+  box-shadow: 0 26px 50px rgba(0,0,0,0.7), 0 2px 0 rgba(255,255,255,0.08) inset, 0 -3px 0 rgba(0,0,0,0.5) inset;
+}
+:is(body.theme-camo, body.theme-army) .bracket {
+  background: linear-gradient(90deg, #2c3220, #6b7346 8%, #2c3220 12%, transparent 12%, transparent 88%, #2c3220 88%, #6b7346 92%, #2c3220);
+}
+:is(body.theme-camo, body.theme-army) .thumb {
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.4) 0 2px, transparent 2px 5px),
+    linear-gradient(90deg, #2f3522, #7d8556 45%, #3a4129);
+}
+/* olive drab top plate with stencil lettering */
+:is(body.theme-camo, body.theme-army) .trim {
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 4px),
+    linear-gradient(#5f6b3a, #47522a 60%, #384120);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 2px 4px rgba(0,0,0,0.6);
+}
+:is(body.theme-camo, body.theme-army) .brand { font-family: var(--stencil); font-style: normal; letter-spacing: 4px; color: #e2d9a8; text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+:is(body.theme-camo, body.theme-army) .brand b { color: #e2d9a8; text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+:is(body.theme-camo, body.theme-army) .tagline { font-family: var(--stencil); color: #d8cf9f; opacity: 0.9; letter-spacing: 2px; }
+:is(body.theme-camo, body.theme-army) .screws i { background: radial-gradient(circle at 35% 35%, #c9c7a8, #6b6a4f 60%, #2b2a1d); }
+/* matte dark olive front panel */
+:is(body.theme-camo, body.theme-army) .face {
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
+    linear-gradient(#3d452a, #2e3420);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.8) inset, 0 1px 0 rgba(255,255,255,0.06);
+}
+:is(body.theme-camo, body.theme-army) label, :is(body.theme-camo, body.theme-army) .col.chan > label { font-family: var(--stencil); letter-spacing: 2px; }
+:is(body.theme-camo, body.theme-army) .knob { background: radial-gradient(circle, #050505 60%, #4c5236 62%, #12140c 70%); }
+:is(body.theme-camo, body.theme-army) .knob .cap { background: repeating-conic-gradient(from 0deg, #15170f 0 5deg, #2b2f1e 5deg 10deg); }
+:is(body.theme-camo, body.theme-army) .knob .cap::before { background: radial-gradient(circle at 35% 30%, #6b7346, #353b24 60%, #1a1d11); }
+:is(body.theme-camo, body.theme-army) .knob .mark, :is(body.theme-camo, body.theme-army) .knob.big .mark { background: #e2d9a8; box-shadow: 0 0 3px rgba(226,217,168,0.6); }
+:is(body.theme-camo, body.theme-army) .glass { box-shadow: 0 0 0 2px #6b7346, 0 0 0 4px #1d2113, 0 6px 14px rgba(0,0,0,0.8) inset; }
+:is(body.theme-camo, body.theme-army) .meter { background: radial-gradient(ellipse at 50% 90%, #0f2410, #030a04 75%); box-shadow: 0 2px 6px rgba(0,0,0,0.8) inset; }
+:is(body.theme-camo, body.theme-army) .ticker { background: #031006; }
+:is(body.theme-camo, body.theme-army) #ticker { color: #9fe36d; text-shadow: 0 0 8px rgba(141,255,106,0.6); }
+:is(body.theme-camo, body.theme-army) .ssb-labels span.on, :is(body.theme-camo, body.theme-army) .band-labels span.on { color: #e2d9a8; text-shadow: 0 0 4px rgba(226,217,168,0.5); }
+:is(body.theme-camo, body.theme-army) .ssb-lever, :is(body.theme-camo, body.theme-army) .band-lever {
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 4px), linear-gradient(#8a9160, #3f4628);
+}
+:is(body.theme-camo, body.theme-army) .key {
+  font-family: var(--stencil); letter-spacing: 2px; color: #e2d9a8;
+  background: linear-gradient(#5b6638, #39421f);
+  box-shadow: 0 4px 0 #1a1e0e, 0 5px 8px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.15) inset;
+}
+:is(body.theme-camo, body.theme-army) .key.red { background: linear-gradient(#8e2a17, #5c160a); }
+:is(body.theme-camo, body.theme-army) .key:active, :is(body.theme-camo, body.theme-army) .key.pressed { box-shadow: 0 1px 0 #1a1e0e, 0 2px 4px rgba(0,0,0,0.6); }
+:is(body.theme-camo, body.theme-army) .key.toggle.on::after { background: #b6ff5c; box-shadow: 0 0 6px #b6ff5c; }
+:is(body.theme-camo, body.theme-army) .echo-box { background: linear-gradient(#232816, #12150b); }
+:is(body.theme-camo, body.theme-army) .echo-box input { accent-color: #c8d36a; }
+/* handle on a khaki ID tag */
+:is(body.theme-camo, body.theme-army) .handle-plate {
+  font-family: var(--stencil); color: #3b3a26;
+  background: linear-gradient(#d9cf9c, #a99f6c);
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 2px 4px rgba(0,0,0,0.6);
+}
+:is(body.theme-camo, body.theme-army) .handle-plate b { color: #1f1e12; }
+
+/* camo on the camo theme's top plate too */
+body.theme-camo .trim {
+  background:
+    linear-gradient(rgba(20, 24, 10, 0.25), rgba(20, 24, 10, 0.45)),
+    radial-gradient(ellipse 60px 22px at 8% 30%, #1d2113 96%, transparent 100%),
+    radial-gradient(ellipse 80px 26px at 30% 80%, #5a4630 96%, transparent 100%),
+    radial-gradient(ellipse 70px 20px at 52% 20%, #8a8456 96%, transparent 100%),
+    radial-gradient(ellipse 90px 28px at 74% 75%, #1d2113 96%, transparent 100%),
+    radial-gradient(ellipse 60px 24px at 93% 25%, #5a4630 96%, transparent 100%),
+    #556b2f;
+}
+
+/* Army green: solid olive drab, with a painted-metal finish */
+body.theme-army .case {
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255,255,255,0.08), transparent 45%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 3px),
+    linear-gradient(#5a6430, #4b5320 45%, #3a4119);
+  box-shadow: 0 26px 50px rgba(0,0,0,0.7), 0 2px 0 rgba(255,255,255,0.12) inset, 0 -3px 0 rgba(0,0,0,0.5) inset;
+}
+body.theme-army .case::before {      /* corner rivets */
+  content: ""; position: absolute; inset: 6px; pointer-events: none; border-radius: 8px;
+  background:
+    radial-gradient(circle at 6px 6px, #9a9f78 2px, #2b2f17 3px, transparent 3.5px) top left / 50% 50% no-repeat,
+    radial-gradient(circle at calc(100% - 6px) 6px, #9a9f78 2px, #2b2f17 3px, transparent 3.5px) top right / 50% 50% no-repeat,
+    radial-gradient(circle at 6px calc(100% - 6px), #9a9f78 2px, #2b2f17 3px, transparent 3.5px) bottom left / 50% 50% no-repeat,
+    radial-gradient(circle at calc(100% - 6px) calc(100% - 6px), #9a9f78 2px, #2b2f17 3px, transparent 3.5px) bottom right / 50% 50% no-repeat;
+}
+
+/* military handset: earpiece on top, mouthpiece below, press-to-talk bar on the grip */
+:is(body.theme-camo, body.theme-army) #mic { transform: rotate(3deg); }
+:is(body.theme-camo, body.theme-army) .mic-hook { background: linear-gradient(90deg, #2f3522, #8a9160 50%, #2f3522); }
+:is(body.theme-camo, body.theme-army) .mic-body {
+  display: block; padding: 0; border-radius: 0; box-shadow: none;
+  background: linear-gradient(90deg, transparent 0 50px, #1c2112 50px, #57633a 66px, #46512b 92px, #20250f 120px, transparent 120px);
+  filter: drop-shadow(0 22px 22px rgba(0,0,0,0.65));
+}
+:is(body.theme-camo, body.theme-army) .mic-body::before,
+:is(body.theme-camo, body.theme-army) .mic-body::after {
+  content: ""; position: absolute; left: 50%; border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 32% 28%, rgba(255,255,255,0.14), transparent 45%),
+    radial-gradient(circle, #4d5833, #2b3119 72%, #1a1e0e);
+  box-shadow: 0 0 0 3px #1a1e0e inset;
+}
+:is(body.theme-camo, body.theme-army) .mic-body::before { top: 4px; width: 150px; height: 118px; margin-left: -75px; }     /* earpiece */
+:is(body.theme-camo, body.theme-army) .mic-body::after { bottom: 0; width: 136px; height: 104px; margin-left: -68px;      /* mouthpiece */
+  background:
+    radial-gradient(circle, #0d0f08 1.7px, transparent 2.3px) center / 9px 9px,
+    radial-gradient(circle at 50% 50%, #20250f 34%, transparent 35%),
+    radial-gradient(ellipse at 32% 28%, rgba(255,255,255,0.14), transparent 45%),
+    radial-gradient(circle, #4d5833, #2b3119 72%, #1a1e0e);
+  -webkit-mask: radial-gradient(circle, #000 70%, #000 70%);
+}
+:is(body.theme-camo, body.theme-army) .grille {         /* earpiece holes */
+  position: absolute; top: 26px; left: 50%; margin-left: -40px; z-index: 1;
+  width: 80px; height: 72px; border-radius: 50%;
+  background:
+    radial-gradient(circle, #0d0f08 1.8px, transparent 2.4px) 0 0 / 9px 9px,
+    radial-gradient(circle, #262b18, #151809 70%);
+  box-shadow: 0 0 0 4px #20250f, 0 2px 4px rgba(0,0,0,0.8) inset;
+}
+:is(body.theme-camo, body.theme-army) .mic-brand {
+  position: absolute; top: 128px; left: 0; right: 0; margin: 0; z-index: 1; text-align: center;
+  font: 900 9px var(--stencil); letter-spacing: 2px; color: #d8cf9f;
+}
+:is(body.theme-camo, body.theme-army) #ptt {            /* rubber press-to-talk bar */
+  position: absolute; top: 146px; left: 50%; margin: 0 0 0 -27px; z-index: 1;
+  width: 54px; height: 116px; border-radius: 12px;
+  font: 900 9px var(--stencil); letter-spacing: 1px; color: #d8cf9f; gap: 6px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 6px),
+    linear-gradient(90deg, #0e1008, #2a2f1c 50%, #0e1008);
+  box-shadow: 0 5px 0 #070804, 0 7px 10px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.1) inset;
+}
+:is(body.theme-camo, body.theme-army) #ptt.down { transform: translateY(4px); box-shadow: 0 1px 0 #070804, 0 2px 4px rgba(0,0,0,0.7); filter: brightness(1.35); }
+:is(body.theme-camo, body.theme-army) .mic-hint {
+  position: absolute; bottom: 112px; left: 0; right: 0; margin: 0; text-align: center; z-index: 1;
+  font-size: 9px; color: #d8cf9f;
+}
+:is(body.theme-camo, body.theme-army) .mic-strain { background: linear-gradient(90deg, #12150b, #3a4324, #12150b); }
