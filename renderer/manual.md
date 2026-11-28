@@ -81,7 +81,7 @@ Sweeps the channels on your band and stops on any channel where someone is talki
 
 ### ROGER
 
-When it's on (green light), the radio sends a short two-tone beep when you let go of the talk button, so others know you're done.
+When it's on (green light), the radio sends a roger beep when you let go of the talk button, so others know you're done. Pick the sound in SETUP, under **Roger beep**. The TX lamp stays lit until the beep has gone out.
 
 ### ECHO and the echo slider
 
@@ -135,6 +135,12 @@ Tick **Host on port** to run a base station on this computer. The radio lists th
 - **Microphone** and **Speaker:** pick devices, or leave them on the default. If a device is unplugged, the radio goes back to the default.
 - **Mic level:** talk normally and watch the bar.
 - **Mic gain:** adjust it until the level bar sits in the green, below the dashed line. That's how loud others will hear you.
+
+### Roger beep
+
+Pick the sound your radio sends when you let go of the talk button. There are 10 built in: Classic two-tone, Single beep, Two-tone falling, Triple chirp, Bumblebee trill, Sweep up, Sweep down, Morse K (go ahead), Morse R (roger) and Space sweep. Picking one plays it, and turns ROGER on. **Play** plays it again.
+
+To use your own sound, click **Add a WAV file…** and pick a .wav file. The radio trims silence off both ends, evens out the volume and keeps up to 3 seconds. Your sounds appear under **Your sounds** in the list, and **Remove** deletes the one that's picked. You can keep up to 20.
 
 ### Look
 

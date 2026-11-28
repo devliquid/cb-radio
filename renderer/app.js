@@ -35,6 +35,7 @@ const DEFAULTS = {
   squelch: 0.35,
   channel: 19,
   roger: true,
+  rogerSound: 'classic',   // a built-in id from ROGER_SOUNDS, or 'my:<id>' for the user's own
   echo: false,
   echoAmount: 0.5,     // 0..1
   mode: 'am',          // sideband switch: 'usb', 'am' (OFF) or 'lsb'
@@ -286,7 +287,8 @@ function showBand() {
 }
 function setBand(b, quiet = false) {
   if (!BANDS[b] || b === settings.band) return;
-  if (transmitting) stopTx();
+  if (transmitting) stopTx(true);
+  cancelRogerTail(true);
   stopScan();
   settings.band = b; save();
   talkers.clear(); players.clear(); lastHeard = '';
@@ -542,18 +544,95 @@ function onAudio(buf) {
 }
 
 // roger beep: two short tones sent as the last thing before unkeying
-function rogerFrames() {
-  const tones = [[1050, 0.09], [1400, 0.09]];
-  const total = tones.reduce((n, [, d]) => n + Math.round(d * RATE), 0);
-  const out = new Int16Array(Math.ceil(total / 160) * 160);
-  let i = 0;
-  for (const [f, d] of tones) {
-    const n = Math.round(d * RATE);
-    for (let k = 0; k < n; k++, i++) out[i] = Math.sin((2 * Math.PI * f * k) / RATE) * 9000 * Math.min(1, k / 40, (n - k) / 40);
+// Each built-in sound is a list of parts, made into 8 kHz samples:
+//   [Hz, seconds]                 a steady tone
+//   ['sweep', fromHz, toHz, s]    a glide
+//   ['trill', aHz, bHz, s, step]  two tones swapping every step seconds
+//   [0, s]                        silence
+//   ['decay', ...part]            the part, fading out
+const ROGER_SOUNDS = {
+  classic: { name: 'Classic two-tone', parts: [[1050, 0.09], [1400, 0.09]] },
+  single: { name: 'Single beep', parts: [[1000, 0.16]] },
+  falling: { name: 'Two-tone, falling', parts: [[1400, 0.09], [1050, 0.09]] },
+  triple: { name: 'Triple chirp', parts: [[1800, 0.04], [0, 0.03], [1800, 0.04], [0, 0.03], [1800, 0.04]] },
+  trill: { name: 'Bumblebee trill', parts: [['trill', 1200, 1600, 0.32, 0.025]] },
+  sweepUp: { name: 'Sweep up', parts: [['sweep', 600, 2200, 0.25]] },
+  sweepDown: { name: 'Sweep down', parts: [['sweep', 2200, 600, 0.25]] },
+  morseK: { name: 'Morse K (go ahead)', parts: [[800, 0.18], [0, 0.06], [800, 0.06], [0, 0.06], [800, 0.18]] },
+  morseR: { name: 'Morse R (roger)', parts: [[800, 0.06], [0, 0.06], [800, 0.18], [0, 0.06], [800, 0.06]] },
+  space: { name: 'Space sweep', parts: [['decay', 'sweep', 3000, 400, 0.4]] },
+};
+function synthRoger(parts) {
+  const out = [];
+  for (let part of parts) {
+    let decay = false;
+    if (part[0] === 'decay') { decay = true; part = part.slice(1); }
+    const kind = typeof part[0] === 'string' ? part[0] : 'tone';
+    const dur = kind === 'tone' ? part[1] : part[3];
+    const n = Math.round(dur * RATE);
+    let phase = 0;
+    for (let k = 0; k < n; k++) {
+      let f;
+      if (kind === 'tone') f = part[0];
+      else if (kind === 'sweep') f = part[1] + (part[2] - part[1]) * (k / n);
+      else f = Math.floor(k / (part[4] * RATE)) % 2 ? part[2] : part[1];
+      phase += (2 * Math.PI * f) / RATE;
+      const env = Math.min(1, k / 40, (n - k) / 40) * (decay ? Math.exp((-3 * k) / n) : 1);
+      out.push(f ? Math.sin(phase) * 9000 * env : 0);
+    }
   }
+  return Int16Array.from(out);
+}
+
+// ---------- the user's own sounds, kept apart from the settings ----------
+const MY_ROGERS_KEY = 'breaker40-rogers';
+const myRogers = (() => { try { return JSON.parse(localStorage.getItem(MY_ROGERS_KEY) || '[]'); } catch { return []; } })();
+function saveMyRogers() {
+  try { localStorage.setItem(MY_ROGERS_KEY, JSON.stringify(myRogers)); return true; }
+  catch { return false; }
+}
+const toB64 = (i16) => { let s = ''; const b = new Uint8Array(i16.buffer); for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); };
+const fromB64 = (s) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Int16Array(u.buffer); };
+
+// The chosen roger beep as 8 kHz samples (falls back to Classic if a sound was removed).
+function rogerPcm(id = settings.rogerSound) {
+  if (id.startsWith('my:')) {
+    const mine = myRogers.find((r) => `my:${r.id}` === id);
+    if (mine) return fromB64(mine.pcm);
+  }
+  return synthRoger((ROGER_SOUNDS[id] || ROGER_SOUNDS.classic).parts);
+}
+function rogerFrames(id) {
+  const pcm = rogerPcm(id);
+  const out = new Int16Array(Math.ceil(pcm.length / 160) * 160);
+  out.set(pcm);
   const frames = [];
   for (let o = 0; o < out.length; o += 160) frames.push(out.slice(o, o + 160).buffer);
   return frames;
+}
+
+// Sends the roger beep, then unkeys. The first 0.2 s goes at once and the rest at real-time
+// pace, so a long beep doesn't pile up at the other end (they skip ahead past 0.6 s of backlog).
+let rogerTail = null;
+function sendRogerThenUnkey() {
+  const frames = rogerFrames();
+  let i = 0;
+  const unkey = () => { rogerTail = null; if (connected) sendJSON({ type: 'tx', on: false }); refreshTicker(); };
+  const step = () => {
+    if (!connected) { unkey(); return; }
+    const burst = i === 0 ? 10 : 1;
+    for (let k = 0; k < burst && i < frames.length; k++) ws.send(frames[i++]);
+    if (i >= frames.length) { rogerTail = setTimeout(unkey, 40); return; }
+    rogerTail = setTimeout(step, 20);
+  };
+  step();
+}
+// Keying up again during the beep just carries on (the base station still has us keyed).
+function cancelRogerTail(unkey) {
+  if (!rogerTail) return;
+  clearTimeout(rogerTail);
+  rogerTail = null;
+  if (unkey && connected) sendJSON({ type: 'tx', on: false });
 }
 
 // ============================================================
@@ -662,7 +741,8 @@ function clickSound() {
 function tune(ch, quiet = false) {
   ch = ((ch - 1 + 40) % 40) + 1;
   if (ch === settings.channel && connected && !quiet) { showChannel(); return; }
-  if (transmitting) stopTx();
+  if (transmitting) stopTx(true);
+  cancelRogerTail(true);
   settings.channel = ch;
   save();
   talkers.clear();
@@ -709,6 +789,7 @@ function scanStep(fromStatus) {
 
 function startTx() {
   if (transmitting) return;
+  cancelRogerTail(false);
   if (!ctx) { initAudio(); }
   if (!connected) { toast('No base station — open SETUP'); return; }
   if (!micStream) { toast('No microphone'); return; }
@@ -731,8 +812,8 @@ function stopTx(silent = false) {
   capNode.port.postMessage({ active: false });
   applyEcho();
   if (connected && !silent) {
-    if (settings.roger) for (const f of rogerFrames()) ws.send(f);
-    sendJSON({ type: 'tx', on: false });
+    if (settings.roger) sendRogerThenUnkey();
+    else sendJSON({ type: 'tx', on: false });
   }
   $('#ptt').classList.remove('down');
   lamp('#lampTx', false);
@@ -917,6 +998,100 @@ const clarKnob = makeKnob($('#knobClar'), {
   },
 });
 $('#knobClar').addEventListener('dblclick', () => clarKnob.set(0));
+
+// ---------- roger beep choice (SETUP) ----------
+const rogerSel = $('#inRoger');
+function fillRogers() {
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let html = '<optgroup label="Built in">' +
+    Object.entries(ROGER_SOUNDS).map(([id, s]) => `<option value="${id}">${s.name}</option>`).join('') + '</optgroup>';
+  if (myRogers.length) {
+    html += '<optgroup label="Your sounds">' +
+      myRogers.map((r) => `<option value="my:${r.id}">${esc(r.name)} (${r.secs.toFixed(1)} s)</option>`).join('') + '</optgroup>';
+  }
+  rogerSel.innerHTML = html;
+  if (![...rogerSel.options].some((o) => o.value === settings.rogerSound)) settings.rogerSound = 'classic';
+  rogerSel.value = settings.rogerSound;
+  $('#btnRogerDel').disabled = !settings.rogerSound.startsWith('my:');
+}
+async function playRoger(id = settings.rogerSound) {
+  if (!ctx) await initAudio();
+  const pcm = rogerPcm(id);
+  const ab = ctx.createBuffer(1, pcm.length, RATE);
+  const d = ab.getChannelData(0);
+  for (let i = 0; i < pcm.length; i++) d[i] = pcm[i] / 32768;
+  const src = ctx.createBufferSource();
+  src.buffer = ab;
+  src.connect(rxIn);          // through the receiver, so it sounds like it will on the air
+  src.start();
+}
+rogerSel.addEventListener('change', () => {
+  settings.rogerSound = rogerSel.value;
+  if (!settings.roger) { settings.roger = true; rogerBtn.classList.add('on'); }   // picking a beep turns ROGER on
+  save();
+  $('#btnRogerDel').disabled = !settings.rogerSound.startsWith('my:');
+  playRoger();
+});
+$('#btnRogerPlay').addEventListener('click', () => playRoger());
+$('#btnRogerAdd').addEventListener('click', () => $('#inRogerFile').click());
+$('#btnRogerDel').addEventListener('click', () => {
+  const id = settings.rogerSound.slice(3);
+  const i = myRogers.findIndex((r) => r.id === id);
+  if (i < 0) return;
+  const [gone] = myRogers.splice(i, 1);
+  saveMyRogers();
+  settings.rogerSound = 'classic'; save();
+  fillRogers();
+  toast(`Removed ${gone.name}`);
+  $('#rogerNote').textContent = `Removed "${gone.name}". Your roger beep is back to ${ROGER_SOUNDS.classic.name}.`;
+});
+// A WAV file becomes 8 kHz mono, trimmed of silence at both ends, at most 3 s, at a steady level.
+$('#inRogerFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const note = $('#rogerNote');
+  try {
+    if (myRogers.length >= 20) throw new Error('You already have 20 of your own sounds. Remove one first.');
+    if (!ctx) await initAudio();
+    const decoded = await ctx.decodeAudioData(await file.arrayBuffer());
+    const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(decoded.duration * RATE)), RATE);
+    const src = off.createBufferSource();
+    src.buffer = decoded;
+    src.connect(off.destination);
+    src.start();
+    let f = (await off.startRendering()).getChannelData(0);
+    let a = 0, b = f.length;
+    while (a < b && Math.abs(f[a]) < 0.01) a++;
+    while (b > a && Math.abs(f[b - 1]) < 0.01) b--;
+    if (b - a < RATE * 0.02) throw new Error('That file is silent.');
+    const cut = b - a > RATE * 3;
+    f = f.subarray(a, Math.min(b, a + RATE * 3));
+    let peak = 0;
+    for (const v of f) peak = Math.max(peak, Math.abs(v));
+    const gain = 12000 / (peak * 32768 || 1);
+    const pcm = Int16Array.from(f, (v) => Math.max(-32767, Math.min(32767, Math.round(v * 32768 * gain))));
+    const n = Math.min(pcm.length, 400);   // short fades so it doesn't click
+    for (let i = 0; i < n; i++) { const g = i / n; pcm[i] *= g; pcm[pcm.length - 1 - i] *= g; }
+    const entry = {
+      id: Date.now().toString(36),
+      name: file.name.replace(/\.[^.]+$/, '').slice(0, 30) || 'My sound',
+      secs: pcm.length / RATE,
+      pcm: toB64(pcm),
+    };
+    myRogers.push(entry);
+    if (!saveMyRogers()) { myRogers.pop(); throw new Error('There is no room left to store it. Remove one of your sounds first.'); }
+    settings.rogerSound = `my:${entry.id}`;
+    settings.roger = true; rogerBtn.classList.add('on');
+    save();
+    fillRogers();
+    note.textContent = `Added "${entry.name}" (${entry.secs.toFixed(1)} s)${cut ? ', cut to 3 seconds' : ''}. It's now your roger beep.`;
+    playRoger();
+  } catch (err) {
+    note.textContent = `Couldn't add that file: ${err && err.message ? err.message : err}`;
+  }
+});
+fillRogers();
 
 // ============================================================
 //  Setup sheet

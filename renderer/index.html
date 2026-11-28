@@ -179,6 +179,20 @@
       </label>
 
       <hr>
+      <h3>Roger beep</h3>
+      <label class="field">
+        <span>Sound</span>
+        <select id="inRoger"></select>
+      </label>
+      <div class="row">
+        <button id="btnRogerPlay" class="ghost">▶ Play</button>
+        <button id="btnRogerAdd" class="ghost">Add a WAV file…</button>
+        <button id="btnRogerDel" class="ghost" disabled>Remove</button>
+        <input type="file" id="inRogerFile" accept=".wav,audio/wav,audio/x-wav,audio/wave" hidden>
+      </div>
+      <p class="muted" id="rogerNote">The ROGER button on the radio turns the beep on and off. Your own sounds can be up to 3 seconds long; longer ones are cut.</p>
+
+      <hr>
       <h3>Look</h3>
       <label class="field">
         <span>Theme</span>

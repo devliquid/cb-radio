@@ -36,7 +36,7 @@ Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases
 | **PUSH TO TALK** | Hold to talk. Holding **Space** does the same. Like a real rig, you can't hear while you're keyed up, and the mic unkeys after 3 minutes. |
 | **CH 9 / CH 19** | Jump to the emergency channel or the highway channel on the 11 meter band. |
 | **SCAN** | Sweeps the channels on your band and stops on any channel where someone is talking. |
-| **ROGER** | Sends a roger beep when you let go of the mic. |
+| **ROGER** | Sends a roger beep when you let go of the mic. Pick the sound in SETUP. |
 | **ECHO** and slider | Echo mic: everyone on the channel hears your voice repeat. The slider sets how much, from a light slap to a long, ringing echo. Moving it turns echo on. You don't hear your own echo, just like with a real echo mic. |
 | Meter | S-meter on receive, RF power on transmit. |
 | Band strip | All 40 channels on your band: green means people are listening, red means someone is talking. Click one to tune to it. |
@@ -52,6 +52,7 @@ Each PC keeps its own settings, and they're still there after a restart.
 - **Be the base station:** run the relay on this PC, on any port.
 - **Microphone / Speaker:** choose devices, or leave them on Windows default. If a chosen device is unplugged, the app falls back to the default.
 - **Mic level and Mic gain:** talk normally and adjust the gain until the level bar sits in the green, below the dashed line. That's the level other people will hear.
+- **Roger beep:** pick from 10 built-in sounds (Classic two-tone, Single beep, Two-tone falling, Triple chirp, Bumblebee trill, Sweep up, Sweep down, Morse K, Morse R, Space sweep), or click **Add a WAV file…** to use your own. Your sounds are trimmed, levelled and kept up to 3 seconds, and **Remove** deletes one.
 - **Push-to-talk key:** click **Change…** and press any key. Esc cancels. Tab and Enter can't be used because they move around the window.
 - **Theme:** **Classic** is the black mobile rig with a hand mic. **Silver base station** is a silver tabletop radio with a desk mic, where the white bar on the mic's base is the push-to-talk.
 - **Manual:** how everything on the radio works. Read it in SETUP, or open it as a text document or a PDF. The text is in [renderer/manual.md](renderer/manual.md).
