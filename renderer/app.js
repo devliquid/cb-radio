@@ -760,6 +760,7 @@ function openSetup() {
   $('#gainVal').textContent = `${Math.round(settings.micGain * 100)}%`;
   renderStations();
   showPttKey();
+  showLatestVersion();
   sheet.hidden = false;
   if (!ctx) initAudio(); else fillDevices();
   (settings.handle ? $('#inServer') : $('#inHandle')).focus();
@@ -959,8 +960,9 @@ function frame() {
 // coiled cord from the radio to the mic
 (function drawCord() {
   const svg = $('#cord');
-  const p0 = [895, 410], p3 = [1063, 512];      // radio side jack -> mic strain relief
-  const c1 = [960, 600], c2 = [1060, 640];
+  // radio side jack -> into the mic's strain relief (centre x 1055, spans y 422-462; the mic is drawn on top)
+  const p0 = [895, 410], p3 = [1055, 448];
+  const c1 = [960, 600], c2 = [1055, 640];   // c2 straight below p3, so the cord rises straight into the mic
   const bez = (t) => {
     const u = 1 - t;
     return [0, 1].map((k) => u * u * u * p0[k] + 3 * u * u * t * c1[k] + 3 * u * t * t * c2[k] + t * t * t * p3[k]);
@@ -971,13 +973,61 @@ function frame() {
     const t = i / (loops * 12);
     const [x, y] = bez(t);
     const ang = (i / 12) * Math.PI * 2;
-    const px = x + Math.cos(ang) * 9, py = y + Math.sin(ang) * 6;
+    const amp = Math.min(1, t * 14, (1 - t) * 9);   // coils fade out at both ends, so the cord plugs in straight
+    const px = x + Math.cos(ang) * 9 * amp, py = y + Math.sin(ang) * 6 * amp;
     d += (i ? 'L' : 'M') + px.toFixed(1) + ',' + py.toFixed(1);
   }
   svg.innerHTML =
     `<path d="${d}" fill="none" stroke="#050506" stroke-width="5" stroke-linecap="round"/>` +
     `<path d="${d}" fill="none" stroke="#2c2e33" stroke-width="2.5" stroke-linecap="round"/>`;
 })();
+
+// ---------- updates ----------
+// Check for updates: if a newer release exists, download it, close, install, and start again.
+const updBtn = $('#btnUpdate'), updStatus = $('#updateStatus');
+window.cb.version().then((v) => { $('#verCurrent').textContent = v; });
+window.cb.onUpdateProgress((pct) => { updStatus.textContent = `Downloading the update… ${pct}%`; });
+// Opening SETUP looks up the latest version (once per run) so it shows without clicking. It installs nothing.
+let latestLooked = false;
+async function showLatestVersion() {
+  if (latestLooked) return;
+  latestLooked = true;
+  const r = await window.cb.checkUpdate();
+  if (!r.ok) { $('#verLatest').textContent = 'unknown'; latestLooked = false; return; }
+  $('#verLatest').textContent = r.latest;
+  if (r.available && !updBtn.disabled) updStatus.textContent = `Version ${r.latest} is out. Click Check for updates to install it.`;
+}
+updBtn.addEventListener('click', async () => {
+  updBtn.disabled = true;
+  updStatus.textContent = 'Checking for updates…';
+  const r = await window.cb.checkUpdate();
+  if (!r.ok) {
+    updStatus.textContent = `Couldn't check for updates: ${r.error}`;
+    updBtn.disabled = false;
+    return;
+  }
+  $('#verLatest').textContent = r.latest;
+  if (!r.available) {
+    updStatus.textContent = `You have the latest version (${r.current}).`;
+    updBtn.disabled = false;
+    return;
+  }
+  if (!r.auto) {
+    updStatus.textContent = `Version ${r.latest} is out. This copy can't update itself, so the download page is opening.`;
+    await window.cb.installUpdate();
+    updBtn.disabled = false;
+    return;
+  }
+  if (transmitting) stopTx();
+  updStatus.textContent = `Version ${r.latest} found. Downloading…`;
+  const res = await window.cb.installUpdate();
+  if (!res.ok) {
+    updStatus.textContent = `The update failed: ${res.error}`;
+    updBtn.disabled = false;
+    return;
+  }
+  updStatus.textContent = `Installing ${r.latest}. The radio closes now and opens again when it's done.`;
+});
 
 // ============================================================
 //  Boot

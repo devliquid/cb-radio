@@ -17,6 +17,7 @@
     "dist:all": "npm run dist && npm run dist:relay"
   },
   "dependencies": {
+    "electron-updater": "^6.8.11",
     "ws": "^8.18.0"
   },
   "devDependencies": {

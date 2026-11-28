@@ -124,10 +124,11 @@ jobs:
             dist/*.AppImage
             dist/*.deb
             dist/Breaker40-BaseStation-linux-*
+            dist/latest-linux*.yml
 
       - name: Attach to the release
         if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.release_tag || github.ref_name }}
-        run: gh release upload "$TAG" dist/*.AppImage dist/*.deb dist/Breaker40-BaseStation-linux-* --clobber
+        run: gh release upload "$TAG" dist/*.AppImage dist/*.deb dist/Breaker40-BaseStation-linux-* dist/latest-linux*.yml --clobber

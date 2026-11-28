@@ -498,6 +498,8 @@ kbd {
 .check { display: flex; align-items: center; gap: 8px; font-size: 14px; letter-spacing: 0; font-weight: 400; color: #e6e7ea; }
 .muted { color: #9a9ea6; font-size: 13px; line-height: 1.45; }
 #hostInfo { margin-top: 10px; }
+#verCurrent, #verLatest { color: var(--amber); }
+#updateStatus { margin: 8px 0 0; min-height: 1em; }
 #hostInfo code { color: var(--amber); font-size: 13px; user-select: all; }
 .primary {
   font: 700 13px "Segoe UI", Arial, sans-serif;
