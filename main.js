@@ -109,6 +109,45 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('app:version', () => app.getVersion());
+
+  // ---------- manual ----------
+  const manual = require('./manual');
+  ipcMain.handle('manual:html', () => manual.toHtmlBody(manual.source(app.getVersion())));
+  // Writes the manual as a .txt or .pdf into the app's data folder and opens it in the
+  // computer's own text editor or PDF viewer.
+  ipcMain.handle('manual:open', async (_e, kind) => {
+    try {
+      const md = manual.source(app.getVersion());
+      const dir = path.join(app.getPath('userData'), 'Manual');
+      require('fs').mkdirSync(dir, { recursive: true });
+      const file = path.join(dir, `Breaker 40 CB Manual.${kind === 'pdf' ? 'pdf' : 'txt'}`);
+      if (kind === 'pdf') {
+        const pdfWin = new BrowserWindow({ show: false, webPreferences: { javascript: false } });
+        try {
+          await pdfWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(manual.toPrintHtml(md)));
+          const pdf = await pdfWin.webContents.printToPDF({
+            pageSize: 'Letter', printBackground: true,
+            margins: { top: 0.6, bottom: 0.6, left: 0.7, right: 0.7 },
+            displayHeaderFooter: true,
+            headerTemplate: '<span></span>',
+            footerTemplate: '<div style="width:100%;font-size:8px;color:#888;text-align:center;font-family:Segoe UI,Arial">Breaker 40 CB Manual · page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
+          });
+          require('fs').writeFileSync(file, pdf);
+        } finally {
+          pdfWin.destroy();
+        }
+      } else {
+        require('fs').writeFileSync(file, '\ufeff' + manual.toText(md), 'utf8');   // BOM so Notepad reads it as UTF-8
+      }
+      if (!process.env.CB_NO_OPEN) {
+        const err = await shell.openPath(file);
+        if (err) return { ok: false, error: err };
+      }
+      return { ok: true, file };
+    } catch (err) {
+      return { ok: false, error: firstLine(err) };
+    }
+  });
   ipcMain.handle('update:check', async () => {
     const current = app.getVersion();
     if (!app.isPackaged && !process.env.CB_UPDATE_URL) {

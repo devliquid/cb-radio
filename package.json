@@ -31,6 +31,7 @@
     "afterPack": "build/after-pack.js",
     "files": [
       "main.js",
+      "manual.js",
       "preload.js",
       "renderer/**",
       "server/**",

@@ -71,9 +71,23 @@
           </div>
 
           <div class="col chan">
-            <div class="detents" id="detents"></div>
-            <div class="knob big" id="knobCh" tabindex="0" aria-label="Channel selector"><div class="cap"><span class="mark"></span></div></div>
-            <label>CHANNEL</label>
+            <div class="chan-top">
+              <div class="ch-buttons">
+                <button class="key ch-btn" id="btnChUp" aria-label="Channel up" title="Channel up (or the Up arrow key). Hold to keep going.">▲</button>
+                <label>CHANNEL</label>
+                <button class="key ch-btn" id="btnChDn" aria-label="Channel down" title="Channel down (or the Down arrow key). Hold to keep going.">▼</button>
+              </div>
+              <div class="band-screen" id="bandScreen" title="The band you're on">
+                <b id="bandNum">11</b>
+                <span>METER</span>
+                <small id="bandRange"></small>
+              </div>
+            </div>
+            <div class="band-switch" id="bandSwitch" tabindex="0" role="radiogroup" aria-label="Band: 10, 11 or 12 meters">
+              <div class="band-labels"><span data-band="10">10</span><span data-band="11">11</span><span data-band="12">12</span></div>
+              <div class="band-slot"><span class="band-lever"></span></div>
+              <label>BAND · METERS</label>
+            </div>
           </div>
         </div>
 
@@ -181,6 +195,19 @@
         <button id="btnSetKey" class="ghost">Change…</button>
         <span id="keyHint" class="muted"></span>
       </div>
+
+      <hr>
+      <h3>Manual</h3>
+      <p class="muted">How everything on the radio works.</p>
+      <div class="row">
+        <button id="btnManualTxt" class="ghost">Open as a text document</button>
+        <button id="btnManualPdf" class="ghost">Open as a PDF</button>
+        <span id="manualStatus" class="muted"></span>
+      </div>
+      <details class="manual-box">
+        <summary>Read it here</summary>
+        <div id="manualHtml" class="manual"></div>
+      </details>
 
       <hr>
       <h3>Updates</h3>

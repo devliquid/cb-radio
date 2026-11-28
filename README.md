@@ -1,6 +1,6 @@
 # Breaker 40 CB
 
-A 40-channel CB radio for Windows and Linux. Pick a channel, hold the mic button (or the Space bar), and talk to everyone else on that channel who is running the app.
+A CB radio for Windows and Linux, with the 40 CB channels plus the 10 and 12 meter bands (120 channels). Pick a channel, hold the mic button (or the Space bar), and talk to everyone else on that channel who is running the app.
 
 ![radio](build/icon.png)
 
@@ -26,18 +26,20 @@ Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases
 
 | Control | What it does |
 |---|---|
-| **CHANNEL** knob | Channels 1–40, with the real CB frequencies. Drag it, scroll it, or use the arrow keys. |
+| **CHANNEL ▲ / ▼** | Channel up and down, 1–40 on the band you're on. Hold to keep going. The Up and Down arrow keys and the mouse wheel work too. |
+| Band screen | Shows the band you're on (10, 11 or 12 meter) and its frequency range. |
+| **BAND** switch: 10 / 11 / 12 | Picks the band, each with its own 40 channels (120 in all). **11 m** is CB, 26.965–27.405 MHz. **10 m** is 28.305–28.695 MHz in 10 kHz steps. **12 m** is 24.890–24.9875 MHz in 2.5 kHz steps. You only hear people on the same band and channel. |
 | **VOLUME** | Speaker volume. |
 | **SQUELCH** | Turn it all the way down to hear open-band static. Turn it up for silence between transmissions. |
 | **USB / OFF / LSB** switch | Sideband. **OFF** is AM, like most CB talk. **USB** and **LSB** are single sideband (upper and lower). Sideband radios only hear each other properly on the same sideband: the other one comes out back to front, an AM radio turns sideband into garble, and a sideband radio hears AM with a carrier whistle. The mode shows next to the frequency. |
 | **CLARIFIER** | Fine-tunes single sideband voices. Each sideband station is a little off frequency, so its voice sounds high-pitched or low-pitched until you turn the clarifier to where it sounds natural. Double-click it to centre it. |
 | **PUSH TO TALK** | Hold to talk. Holding **Space** does the same. Like a real rig, you can't hear while you're keyed up, and the mic unkeys after 3 minutes. |
-| **CH 9 / CH 19** | Jump to the emergency channel or the highway channel. |
-| **SCAN** | Sweeps the band and stops on any channel where someone is talking. |
+| **CH 9 / CH 19** | Jump to the emergency channel or the highway channel on the 11 meter band. |
+| **SCAN** | Sweeps the channels on your band and stops on any channel where someone is talking. |
 | **ROGER** | Sends a roger beep when you let go of the mic. |
 | **ECHO** and slider | Echo mic: everyone on the channel hears your voice repeat. The slider sets how much, from a light slap to a long, ringing echo. Moving it turns echo on. You don't hear your own echo, just like with a real echo mic. |
 | Meter | S-meter on receive, RF power on transmit. |
-| Band strip | All 40 channels: green means people are listening, red means someone is talking. Click one to tune to it. |
+| Band strip | All 40 channels on your band: green means people are listening, red means someone is talking. Click one to tune to it. |
 | **SETUP** | Everything you can change. See below. |
 
 ## SETUP
@@ -52,6 +54,7 @@ Each PC keeps its own settings, and they're still there after a restart.
 - **Mic level and Mic gain:** talk normally and adjust the gain until the level bar sits in the green, below the dashed line. That's the level other people will hear.
 - **Push-to-talk key:** click **Change…** and press any key. Esc cancels. Tab and Enter can't be used because they move around the window.
 - **Theme:** **Classic** is the black mobile rig with a hand mic. **Silver base station** is a silver tabletop radio with a desk mic, where the white bar on the mic's base is the push-to-talk.
+- **Manual:** how everything on the radio works. Read it in SETUP, or open it as a text document or a PDF. The text is in [renderer/manual.md](renderer/manual.md).
 - **Updates:** shows this version and the latest one on GitHub. **Check for updates** downloads a newer version, closes the radio, installs it and opens the radio again. That works in the installed Windows app and the Linux AppImage. The portable exe and the `.deb` can't replace themselves, so for those it opens the download page instead.
 
 ## How people find each other

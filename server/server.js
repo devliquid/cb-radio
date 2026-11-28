@@ -3,13 +3,15 @@
 //
 // Protocol
 //   client -> server (text JSON):
-//     {type:'join', channel:1..40, handle}   tune to a channel
+//     {type:'join', channel:1..120, handle, wide}   tune to a channel: 1-40 is 11 m (CB),
+//                                             41-80 is 10 m, 81-120 is 12 m. wide:true = knows all 120
 //     {type:'handle', handle}                 change your handle
 //     {type:'tx', on:true|false, mode}        key / unkey the mic; mode is 'am', 'usb' or 'lsb'
 //   client -> server (binary): 8 kHz mono Int16 PCM, only while keyed
 //   server -> client (text JSON):
 //     {type:'hello', id}
-//     {type:'status', counts:[40], active:[channel numbers with someone talking]}
+//     {type:'status', counts:[120], active:[channel numbers with someone talking]}
+//       (radios that didn't send wide:true get counts:[40] and only channels 1-40, as before)
 //     {type:'tx', id, handle, on, mode}
 //   server -> client (binary): uint32 LE sender id + the sender's PCM
 
@@ -19,6 +21,7 @@ const { WebSocketServer } = require('ws');
 const MAX_FRAME = 4096;        // bytes of audio per message
 const MAX_TX_MS = 3 * 60_000;  // a stuck mic is unkeyed after 3 minutes
 const MODES = new Set(['am', 'usb', 'lsb']);
+const CHANNELS = 120;          // 3 bands of 40
 
 function sanitize(h) {
   const s = String(h || '').replace(/[^\w .\-'!?#&]/g, '').trim().slice(0, 16);
@@ -37,23 +40,28 @@ function startServer(port = 7155, host = '0.0.0.0') {
 
   const send = (ws, msg) => { if (ws.readyState === 1) ws.send(msg); };
 
+  // Returns [message for radios that know all 120 channels, message for older 40-channel radios].
   function status() {
-    const counts = new Array(40).fill(0);
+    const counts = new Array(CHANNELS).fill(0);
     const active = new Set();
     for (const c of clients) {
       if (!c.channel) continue;
       counts[c.channel - 1]++;
       if (c.tx) active.add(c.channel);
     }
-    return JSON.stringify({ type: 'status', counts, active: [...active] });
+    const all = [...active];
+    return [
+      JSON.stringify({ type: 'status', counts, active: all }),
+      JSON.stringify({ type: 'status', counts: counts.slice(0, 40), active: all.filter((ch) => ch <= 40) }),
+    ];
   }
   // Coalesce bursts of changes into one status message.
   function broadcastStatus() {
     if (statusTimer) return;
     statusTimer = setTimeout(() => {
       statusTimer = null;
-      const msg = status();
-      for (const c of clients) send(c.ws, msg);
+      const [wide, narrow] = status();
+      for (const c of clients) send(c.ws, c.wide ? wide : narrow);
     }, 30);
   }
   function toChannel(from, obj) {
@@ -72,7 +80,7 @@ function startServer(port = 7155, host = '0.0.0.0') {
     const c = { ws, id: nextId++ >>> 0, channel: 0, handle: 'Unknown', tx: false, mode: 'am', alive: true, txTimer: null };
     clients.add(c);
     send(ws, JSON.stringify({ type: 'hello', id: c.id }));
-    send(ws, status());
+    send(ws, status()[1]);
 
     ws.on('pong', () => { c.alive = true; });
     ws.on('message', (data, isBinary) => {
@@ -90,7 +98,8 @@ function startServer(port = 7155, host = '0.0.0.0') {
       try { m = JSON.parse(data.toString()); } catch { return; }
       if (m.type === 'join') {
         const ch = m.channel | 0;
-        if (ch < 1 || ch > 40) return;
+        if (ch < 1 || ch > CHANNELS) return;
+        c.wide = m.wide === true;
         endTx(c);
         c.channel = ch;
         c.handle = sanitize(m.handle);
@@ -141,7 +150,7 @@ function startServer(port = 7155, host = '0.0.0.0') {
       resolve({
         port: server.address().port,
         stats: () => {
-          const counts = new Array(40).fill(0);
+          const counts = new Array(CHANNELS).fill(0);
           for (const c of clients) if (c.channel) counts[c.channel - 1]++;
           return { people: clients.size, counts };
         },

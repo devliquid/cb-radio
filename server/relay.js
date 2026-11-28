@@ -125,7 +125,9 @@ let lastStatus = '';
 let rl = null;
 
 function describe(stats) {
-  const busy = stats.counts.map((n, i) => (n ? `CH${i + 1}: ${n}` : '')).filter(Boolean).join(', ');
+  // channels 1-40 are 11 m (CB), 41-80 are 10 m, 81-120 are 12 m
+  const name = (i) => (i < 40 ? `CH${i + 1}` : i < 80 ? `10m CH${i - 39}` : `12m CH${i - 79}`);
+  const busy = stats.counts.map((n, i) => (n ? `${name(i)}: ${n}` : '')).filter(Boolean).join(', ');
   return `${stats.people} connected${busy ? ` · ${busy}` : ''}`;
 }
 

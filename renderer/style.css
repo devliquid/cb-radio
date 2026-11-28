@@ -230,7 +230,56 @@ label, .col.chan > label {
 }
 .knob.big .mark { width: 6px; margin-left: -3px; background: var(--amber); box-shadow: 0 0 6px rgba(255,179,71,0.8); }
 
-.col.chan { position: relative; gap: 10px; }
+.col.chan { position: relative; gap: 14px; justify-content: center; }
+.chan-top { display: flex; align-items: center; gap: 12px; }
+.ch-buttons { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.key.ch-btn { min-width: 62px; width: 62px; height: 44px; font-size: 18px; letter-spacing: 0; }
+.band-screen {
+  width: 112px; height: 112px; border-radius: 8px;
+  background: #120403; border: 3px solid #050506;
+  box-shadow: 0 0 0 2px #3b3e44, 0 4px 10px rgba(0,0,0,0.8) inset;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-family: Consolas, "Courier New", monospace; color: var(--led-red);
+}
+.band-screen b { font-size: 50px; line-height: 1; font-weight: 700; text-shadow: 0 0 10px rgba(255,59,34,0.8); }
+.band-screen span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-shadow: 0 0 6px rgba(255,59,34,0.7); }
+.band-screen small { font-size: 9px; letter-spacing: 0.5px; color: rgba(255,59,34,0.75); margin-top: 3px; }
+
+/* 10 / 11 / 12 band switch */
+.band-switch { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; outline: none; padding: 2px 4px; border-radius: 6px; }
+.band-switch:focus-visible { box-shadow: 0 0 0 2px rgba(255,179,71,0.6); }
+.band-labels { display: flex; justify-content: space-between; width: 132px; padding: 0 6px; }
+.band-labels span { font-size: 12px; font-weight: 800; color: var(--label); opacity: 0.55; width: 24px; text-align: center; }
+.band-labels span.on { opacity: 1; color: var(--amber); text-shadow: 0 0 6px rgba(255,179,71,0.6); }
+.band-slot {
+  position: relative; width: 132px; height: 20px; border-radius: 10px;
+  background: linear-gradient(#050506, #1b1c1f 50%, #050506);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.12), 0 2px 4px rgba(0,0,0,0.8) inset;
+}
+.band-lever {
+  position: absolute; top: 1px; width: 30px; height: 18px; border-radius: 5px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 4px),
+    linear-gradient(#e4e6e9, #7a7e85);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.7);
+  transition: left 90ms;
+}
+.band-switch[data-band="10"] .band-lever { left: 7px; }
+.band-switch[data-band="11"] .band-lever { left: 51px; }
+.band-switch[data-band="12"] .band-lever { left: 95px; }
+body.theme-base .band-labels span.on { color: #b01d10; text-shadow: none; }
+body.theme-base .band-screen { box-shadow: 0 0 0 2px #8d9197, 0 4px 10px rgba(0,0,0,0.8) inset; }
+
+/* manual in SETUP */
+.manual-box { margin-top: 10px; }
+.manual-box summary { cursor: pointer; color: var(--amber); font-weight: 600; }
+.manual { max-height: 340px; overflow-y: auto; margin-top: 8px; padding: 4px 14px 10px; border-radius: 6px; background: rgba(255,255,255,0.04); font-size: 13px; line-height: 1.5; user-select: text; }
+.manual h1 { font-size: 18px; margin: 12px 0 6px; }
+.manual h2 { font-size: 15px; margin: 16px 0 4px; color: var(--amber); }
+.manual h3 { font-size: 13px; margin: 12px 0 2px; }
+.manual p { margin: 6px 0; }
+.manual ul { margin: 4px 0; padding-left: 20px; }
+.manual code { color: var(--amber); }
 .detents { position: absolute; width: 170px; height: 170px; top: -10px; left: 50%; margin-left: -85px; pointer-events: none; }
 .detents i {
   position: absolute; left: 50%; top: 50%;

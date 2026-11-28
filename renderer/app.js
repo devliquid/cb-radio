@@ -6,12 +6,24 @@
 
 const $ = (s) => document.querySelector(s);
 
-const FREQS = [
-  26.965, 26.975, 26.985, 27.005, 27.015, 27.025, 27.035, 27.055, 27.065, 27.075,
-  27.085, 27.105, 27.115, 27.125, 27.135, 27.155, 27.165, 27.175, 27.185, 27.205,
-  27.215, 27.225, 27.255, 27.235, 27.245, 27.265, 27.275, 27.285, 27.295, 27.305,
-  27.315, 27.325, 27.335, 27.345, 27.355, 27.365, 27.375, 27.385, 27.395, 27.405,
-];
+// Three bands of 40 channels. 11 m is CB. 10 m and 12 m are the neighbouring (amateur) bands.
+// On the base station they're channels 1-40 (11 m), 41-80 (10 m) and 81-120 (12 m), so older
+// radios, which only know 1-40, keep working on 11 m.
+const BANDS = {
+  10: { base: 40, freqs: Array.from({ length: 40 }, (_, i) => 28.305 + i * 0.010) },
+  11: { base: 0, freqs: [
+    26.965, 26.975, 26.985, 27.005, 27.015, 27.025, 27.035, 27.055, 27.065, 27.075,
+    27.085, 27.105, 27.115, 27.125, 27.135, 27.155, 27.165, 27.175, 27.185, 27.205,
+    27.215, 27.225, 27.255, 27.235, 27.245, 27.265, 27.275, 27.285, 27.295, 27.305,
+    27.315, 27.325, 27.335, 27.345, 27.355, 27.365, 27.375, 27.385, 27.395, 27.405,
+  ] },
+  12: { base: 80, freqs: Array.from({ length: 40 }, (_, i) => 24.890 + i * 0.0025) },
+};
+// 27.185 stays 27.185; 24.8925 keeps its fourth decimal.
+const fmtFreq = (f) => f.toFixed(4).replace(/0$/, '');
+const freqOf = (ch, b = settings.band) => BANDS[b].freqs[ch - 1];
+const netCh = (ch = settings.channel, b = settings.band) => BANDS[b].base + ch;   // channel number on the base station
+const inBand = (n, b = settings.band) => n > BANDS[b].base && n <= BANDS[b].base + 40;
 const RATE = 8000;            // network audio sample rate
 const MAX_TX_MS = 3 * 60_000; // time-out timer, like a real rig
 
@@ -27,6 +39,7 @@ const DEFAULTS = {
   echoAmount: 0.5,     // 0..1
   mode: 'am',          // sideband switch: 'usb', 'am' (OFF) or 'lsb'
   clarifier: 0,        // Hz, -800..+800
+  band: '11',          // '10', '11' or '12' meters
   theme: 'classic',    // 'classic' (mobile rig) or 'base' (silver base station)
   host: false,
   port: 7140,
@@ -239,26 +252,66 @@ const sqKnob = makeKnob($('#knobSq'), {
   value: settings.squelch,
   onChange: (v) => { settings.squelch = v; save(); updateNoise(); toast(v < 0.12 ? 'Squelch open' : `Squelch ${Math.round(v * 10)}`); },
 });
-const chKnob = makeKnob($('#knobCh'), {
-  min: 1, max: 40, step: 1, sweep: 300, value: settings.channel,
-  onChange: (v) => { stopScan(); tune(v); },
-});
+if (!BANDS[settings.band]) settings.band = '11';
+if (!(settings.channel >= 1 && settings.channel <= 40)) settings.channel = 19;
 
-(function buildDetents() {
-  const d = $('#detents');
-  let html = '';
-  for (let ch = 1; ch <= 40; ch++) {
-    const deg = -150 + ((ch - 1) / 39) * 300;
-    const major = ch === 1 || ch % 5 === 0 || ch === 9 || ch === 19;
-    html += `<i class="${major ? 'major' : ''}" style="transform: rotate(${deg + 180}deg) translateY(${major ? 74 : 76}px)"></i>`;
-    if (ch === 1 || ch % 10 === 0 || ch === 19) {
-      const a = (deg - 90) * Math.PI / 180;
-      const x = Math.cos(a) * 92, y = Math.sin(a) * 92;
-      html += `<b style="transform: translate(${x.toFixed(1)}px, ${(y - 6).toFixed(1)}px)">${ch}</b>`;
-    }
-  }
-  d.innerHTML = html;
-})();
+// ---------- channel up / down: click, or hold to keep going ----------
+function holdRepeat(btn, fn) {
+  let t1 = 0, t2 = 0;
+  const stop = () => { clearTimeout(t1); clearInterval(t2); };
+  btn.addEventListener('pointerdown', (e) => {
+    btn.setPointerCapture(e.pointerId);
+    fn();
+    t1 = setTimeout(() => { t2 = setInterval(fn, 110); }, 420);
+  });
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointercancel', stop);
+  btn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); fn(); } });
+}
+holdRepeat($('#btnChUp'), () => { stopScan(); tune(settings.channel + 1); });
+holdRepeat($('#btnChDn'), () => { stopScan(); tune(settings.channel - 1); });
+for (const el of [$('#bandScreen'), $('#btnChUp'), $('#btnChDn')]) {
+  el.addEventListener('wheel', (e) => { e.preventDefault(); stopScan(); tune(settings.channel + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
+}
+
+// ---------- 10 / 11 / 12 meter band switch ----------
+const bandSwitch = $('#bandSwitch');
+const BAND_ORDER = ['10', '11', '12'];
+function showBand() {
+  bandSwitch.dataset.band = settings.band;
+  bandSwitch.querySelectorAll('.band-labels span').forEach((s) => s.classList.toggle('on', s.dataset.band === settings.band));
+  $('#bandNum').textContent = settings.band;
+  const f = BANDS[settings.band].freqs;
+  $('#bandRange').textContent = `${fmtFreq(f[0])}–${fmtFreq(f[39])}`;
+}
+function setBand(b, quiet = false) {
+  if (!BANDS[b] || b === settings.band) return;
+  if (transmitting) stopTx();
+  stopScan();
+  settings.band = b; save();
+  talkers.clear(); players.clear(); lastHeard = '';
+  showBand(); showChannel();
+  if (!quiet) { clickSound(); toast(`${b} meter band · CH ${settings.channel} · ${fmtFreq(freqOf(settings.channel))} MHz`); }
+  sendJSON({ type: 'join', channel: netCh(), handle: handle(), wide: true });
+  refreshTicker();
+}
+bandSwitch.addEventListener('click', (e) => {
+  const lab = e.target.closest('[data-band]');
+  if (lab) { setBand(lab.dataset.band); return; }
+  const r = bandSwitch.querySelector('.band-slot').getBoundingClientRect();
+  if (e.clientY < r.top - 4 || e.clientY > r.bottom + 4) return;
+  setBand(BAND_ORDER[Math.max(0, Math.min(2, Math.floor(((e.clientX - r.left) / r.width) * 3)))]);
+});
+bandSwitch.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const i = BAND_ORDER.indexOf(settings.band) + (e.deltaY > 0 ? 1 : -1);
+  setBand(BAND_ORDER[Math.max(0, Math.min(2, i))]);
+}, { passive: false });
+bandSwitch.addEventListener('keydown', (e) => {
+  const i = BAND_ORDER.indexOf(settings.band);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { setBand(BAND_ORDER[Math.max(0, i - 1)]); e.preventDefault(); }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { setBand(BAND_ORDER[Math.min(2, i + 1)]); e.preventDefault(); }
+});
 
 // ============================================================
 //  Band activity strip
@@ -266,15 +319,15 @@ const chKnob = makeKnob($('#knobCh'), {
 const band = $('#band');
 for (let ch = 1; ch <= 40; ch++) {
   const i = document.createElement('i');
-  i.title = `Channel ${ch} · ${FREQS[ch - 1].toFixed(3)} MHz`;
   i.addEventListener('click', () => { stopScan(); tune(ch); });
   band.appendChild(i);
 }
 function renderBand() {
   [...band.children].forEach((el, idx) => {
     const ch = idx + 1;
-    el.className = (active.has(ch) ? 'act' : counts[idx] > 0 ? 'occ' : '') + (ch === settings.channel ? ' cur' : '');
-    el.title = `Channel ${ch} · ${FREQS[idx].toFixed(3)} MHz · ${counts[idx]} on frequency`;
+    const n = counts[netCh(ch) - 1] || 0;
+    el.className = (active.has(netCh(ch)) ? 'act' : n > 0 ? 'occ' : '') + (ch === settings.channel ? ' cur' : '');
+    el.title = `${settings.band} m · Channel ${ch} · ${fmtFreq(freqOf(ch))} MHz · ${n} on frequency`;
   });
 }
 
@@ -293,17 +346,18 @@ function lamp(id, on) { $(id).classList.toggle('on', !!on); }
 function setTicker(msg) { const t = $('#ticker'); if (t.textContent !== msg) t.textContent = msg; }
 function refreshTicker() {
   if (!connected) { setTicker(ws ? 'SEARCHING FOR BASE…' : 'NO BASE STATION'); return; }
-  if (transmitting) { setTicker(`TX ▶ ${handle().toUpperCase()} ON CH ${settings.channel}`); return; }
+  const chName = `CH ${settings.channel}${settings.band === '11' ? '' : ` · ${settings.band}M`}`;
+  if (transmitting) { setTicker(`TX ▶ ${handle().toUpperCase()} ON ${chName}`); return; }
   if (talkers.size) { setTicker(`◀ ${[...talkers.values()].join(' + ').toUpperCase()}`); return; }
   if (scanning) { setTicker('SCANNING THE BAND…'); return; }
-  const n = counts[settings.channel - 1] || 0;
+  const n = counts[netCh() - 1] || 0;
   const others = Math.max(0, n - 1);
   const tail = lastHeard ? ` · LAST: ${lastHeard.toUpperCase()}` : '';
-  setTicker(`${others} OTHER${others === 1 ? '' : 'S'} ON CH ${settings.channel}${tail}`);
+  setTicker(`${others} OTHER${others === 1 ? '' : 'S'} ON ${chName}${tail}`);
 }
 function showChannel() {
   showDigits(settings.channel);
-  $('#freq').textContent = `${FREQS[settings.channel - 1].toFixed(3)} MHz  ${MODE_NAMES[settings.mode] || 'AM'}`;
+  $('#freq').textContent = `${fmtFreq(freqOf(settings.channel))} MHz  ${MODE_NAMES[settings.mode] || 'AM'}`;
   renderBand();
 }
 $('#handlePlate').textContent = handle().toUpperCase();
@@ -540,7 +594,7 @@ function connect() {
     connected = true;
     retryDelay = 1000;
     setNet('on');
-    sendJSON({ type: 'join', channel: settings.channel, handle: handle() });
+    sendJSON({ type: 'join', channel: netCh(), handle: handle(), wide: true });
     $('#connState').textContent = `Connected to ${url}`;
   };
   sock.onmessage = (e) => {
@@ -611,13 +665,12 @@ function tune(ch, quiet = false) {
   if (transmitting) stopTx();
   settings.channel = ch;
   save();
-  chKnob.set(ch, false);
   talkers.clear();
   players.clear();
   lastHeard = '';
   showChannel();
   if (!quiet) clickSound();
-  sendJSON({ type: 'join', channel: ch, handle: handle() });
+  sendJSON({ type: 'join', channel: netCh(ch), handle: handle(), wide: true });
   refreshTicker();
 }
 
@@ -641,10 +694,11 @@ function stopScan() {
 function scanStep(fromStatus) {
   if (!scanning || transmitting) return;
   const now = Date.now();
-  if (active.has(settings.channel) || talkers.size || rxBusy()) { scanHold = now + 3000; return; }
+  if (active.has(netCh()) || talkers.size || rxBusy()) { scanHold = now + 3000; return; }
   if (now < scanHold) return;
-  if (active.size) {
-    const list = [...active].sort((a, b) => a - b);
+  const here = [...active].filter((n) => inBand(n)).map((n) => n - BANDS[settings.band].base);
+  if (here.length) {
+    const list = here.sort((a, b) => a - b);
     const next = list.find((c) => c > settings.channel) || list[0];
     tune(next, true);
     scanHold = now + 3000;
@@ -730,8 +784,8 @@ function showPttKey() {
 window.addEventListener('blur', () => stopTx());
 
 // ---------- buttons ----------
-$('#btn9').addEventListener('click', () => { stopScan(); tune(9); toast('CH 9 · Emergency'); });
-$('#btn19').addEventListener('click', () => { stopScan(); tune(19); toast('CH 19 · Highway'); });
+$('#btn9').addEventListener('click', () => { stopScan(); setBand('11', true); tune(9); toast('CH 9 · Emergency'); });
+$('#btn19').addEventListener('click', () => { stopScan(); setBand('11', true); tune(19); toast('CH 19 · Highway'); });
 $('#btnScan').addEventListener('click', () => (scanning ? stopScan() : startScan()));
 const rogerBtn = $('#btnRoger');
 rogerBtn.classList.toggle('on', settings.roger);
@@ -1110,8 +1164,8 @@ function drawCord() {
 
 // ---------- themes ----------
 const THEMES = {
-  classic: { tagline: '40 CHANNEL CITIZENS BAND TRANSCEIVER · AM / SSB' },
-  base: { tagline: 'AM / SSB BASE STATION · 40 CHANNEL CITIZENS BAND' },
+  classic: { tagline: '10 · 11 · 12 METER TRANSCEIVER · 120 CHANNELS · AM / SSB' },
+  base: { tagline: 'AM / SSB BASE STATION · 10 · 11 · 12 METER · 120 CHANNELS' },
 };
 function applyTheme() {
   if (!THEMES[settings.theme]) settings.theme = 'classic';
@@ -1173,9 +1227,28 @@ updBtn.addEventListener('click', async () => {
   updStatus.textContent = `Installing ${r.latest}. The radio closes now and opens again when it's done.`;
 });
 
+// ---------- manual ----------
+window.cb.manualHtml().then((html) => { $('#manualHtml').innerHTML = html; });
+async function openManual(kind) {
+  $('#manualStatus').textContent = kind === 'pdf' ? 'Making the PDF…' : 'Opening…';
+  const r = await window.cb.openManual(kind);
+  $('#manualStatus').textContent = r.ok ? `Opened ${r.file}` : `Couldn't open it: ${r.error}`;
+}
+$('#btnManualTxt').addEventListener('click', () => openManual('txt'));
+$('#btnManualPdf').addEventListener('click', () => openManual('pdf'));
+
+// Up / Down arrow keys change channel (when you're not typing).
+window.addEventListener('keydown', (e) => {
+  if (!$('#setup').hidden || typing() || capturingKey) return;
+  if (document.activeElement && document.activeElement.closest('.knob, .ssb, .band-switch')) return;
+  if (e.key === 'ArrowUp') { e.preventDefault(); stopScan(); tune(settings.channel + 1); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); stopScan(); tune(settings.channel - 1); }
+});
+
 // ============================================================
 //  Boot
 // ============================================================
+showBand();
 showChannel();
 showPttKey();
 connect();
