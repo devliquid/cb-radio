@@ -1346,6 +1346,7 @@ const THEMES = {
   army: { tagline: 'ARMY FIELD RADIO · 10 · 11 · 12 METER · 120 CH · AM / SSB' },
   camo: { tagline: 'FIELD RADIO SET · 10 · 11 · 12 METER · 120 CH · AM / SSB' },
   tube: { tagline: 'Tube Type Receiver-Transmitter · 10 · 11 · 12 Meter · AM / SSB' },
+  scanner: { tagline: 'SCANNER · 10 · 11 · 12 METER · 120 CH · AM / SSB' },
 };
 function applyTheme() {
   if (!THEMES[settings.theme]) settings.theme = 'classic';
@@ -1353,6 +1354,7 @@ function applyTheme() {
   document.body.classList.toggle('theme-camo', settings.theme === 'camo');
   document.body.classList.toggle('theme-army', settings.theme === 'army');
   document.body.classList.toggle('theme-tube', settings.theme === 'tube');
+  document.body.classList.toggle('theme-scanner', settings.theme === 'scanner');
   document.querySelector('.tagline').textContent = THEMES[settings.theme].tagline;
   buildMeter();
   drawCord();

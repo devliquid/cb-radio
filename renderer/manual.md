@@ -101,6 +101,7 @@ Opens the settings. See below.
 - **Silver base station theme:** hold the white **PUSH TO TALK** bar on the desk mic's base.
 - **Army themes:** hold the black press-to-talk bar on the handset's grip.
 - **Old tube radio theme:** hold the brass **PUSH TO TALK** button on the microphone stand's base.
+- **Police scanner theme:** hold the big **PUSH TO TALK** button on the speaker-mic.
 - Holding the push-to-talk key (Space unless you changed it) does the same.
 - Like a real radio, you can't hear anyone while you're transmitting.
 - The mic lets go by itself after 3 minutes, so a stuck key can't block the channel.
@@ -153,6 +154,7 @@ To use your own sound, click **Add a WAV file…** and pick a .wav file. The rad
 - **Army green:** an olive drab field radio with green night-vision displays and a military handset.
 - **Army camouflage:** the same field radio in woodland camouflage.
 - **Old tube radio:** a walnut cabinet with a brass name plate, ivory buttons, a warm amber glow and a chrome microphone on a stand.
+- **Police scanner:** a charcoal radio with green backlit LCDs, a gray rubber keypad, a red and blue light bar that flashes while someone is talking, and a shoulder speaker-mic.
 
 ### Push-to-talk key
 
