@@ -1307,12 +1307,14 @@ function frame() {
 // coiled cord from the radio to the mic
 function drawCord() {
   const svg = $('#cord');
-  if (settings.theme === 'base') {
+  if (settings.theme === 'base' || settings.theme === 'tube') {
     // desk mic: a plain cable from the back of the radio, sagging to the back of the mic's base
+    // (cloth-covered and brown on the tube radio)
     const d = 'M880,440 C905,560 960,560 985,470';
+    const [outer, inner] = settings.theme === 'tube' ? ['#1f130a', '#6b4a2b'] : ['#050506', '#2c2e33'];
     svg.innerHTML =
-      `<path d="${d}" fill="none" stroke="#050506" stroke-width="7" stroke-linecap="round"/>` +
-      `<path d="${d}" fill="none" stroke="#2c2e33" stroke-width="3" stroke-linecap="round"/>`;
+      `<path d="${d}" fill="none" stroke="${outer}" stroke-width="7" stroke-linecap="round"/>` +
+      `<path d="${d}" fill="none" stroke="${inner}" stroke-width="3" stroke-linecap="round" ${settings.theme === 'tube' ? 'stroke-dasharray="2 2"' : ''}/>`;
     return;
   }
   // radio side jack -> into the mic's strain relief (centre x 1055, spans y 422-462; the mic is drawn on top)
@@ -1343,12 +1345,14 @@ const THEMES = {
   base: { tagline: 'AM / SSB BASE STATION · 10 · 11 · 12 METER · 120 CHANNELS' },
   army: { tagline: 'ARMY FIELD RADIO · 10 · 11 · 12 METER · 120 CH · AM / SSB' },
   camo: { tagline: 'FIELD RADIO SET · 10 · 11 · 12 METER · 120 CH · AM / SSB' },
+  tube: { tagline: 'Tube Type Receiver-Transmitter · 10 · 11 · 12 Meter · AM / SSB' },
 };
 function applyTheme() {
   if (!THEMES[settings.theme]) settings.theme = 'classic';
   document.body.classList.toggle('theme-base', settings.theme === 'base');
   document.body.classList.toggle('theme-camo', settings.theme === 'camo');
   document.body.classList.toggle('theme-army', settings.theme === 'army');
+  document.body.classList.toggle('theme-tube', settings.theme === 'tube');
   document.querySelector('.tagline').textContent = THEMES[settings.theme].tagline;
   buildMeter();
   drawCord();

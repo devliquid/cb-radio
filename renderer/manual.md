@@ -100,6 +100,7 @@ Opens the settings. See below.
 - **Classic theme:** hold the red **PUSH TO TALK** button on the hand mic.
 - **Silver base station theme:** hold the white **PUSH TO TALK** bar on the desk mic's base.
 - **Army themes:** hold the black press-to-talk bar on the handset's grip.
+- **Old tube radio theme:** hold the brass **PUSH TO TALK** button on the microphone stand's base.
 - Holding the push-to-talk key (Space unless you changed it) does the same.
 - Like a real radio, you can't hear anyone while you're transmitting.
 - The mic lets go by itself after 3 minutes, so a stuck key can't block the channel.
@@ -151,6 +152,7 @@ To use your own sound, click **Add a WAV file…** and pick a .wav file. The rad
 - **Silver base station:** a silver tabletop radio with a desk mic.
 - **Army green:** an olive drab field radio with green night-vision displays and a military handset.
 - **Army camouflage:** the same field radio in woodland camouflage.
+- **Old tube radio:** a walnut cabinet with a brass name plate, ivory buttons, a warm amber glow and a chrome microphone on a stand.
 
 ### Push-to-talk key
 
