@@ -949,7 +949,8 @@ body.theme-army .case::before {      /* corner rivets */
 }
 :is(body.theme-camo, body.theme-army) #ptt.down { transform: translateY(4px); box-shadow: 0 1px 0 #070804, 0 2px 4px rgba(0,0,0,0.7); filter: brightness(1.35); }
 :is(body.theme-camo, body.theme-army) .mic-hint {
-  position: absolute; bottom: 112px; left: 0; right: 0; margin: 0; text-align: center; z-index: 1;
+  position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); margin: 0; z-index: 2; white-space: nowrap;
+  padding: 2px 7px; border-radius: 8px; background: rgba(14, 16, 8, 0.85); box-shadow: 0 0 0 1px #3a4324;
   font-size: 9px; color: #d8cf9f;
 }
 :is(body.theme-camo, body.theme-army) .mic-strain { background: linear-gradient(90deg, #12150b, #3a4324, #12150b); }
