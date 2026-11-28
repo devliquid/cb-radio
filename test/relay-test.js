@@ -40,6 +40,18 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.strictEqual(txOn.handle, 'RubberDuck', 'handle is cleaned');
   assert.strictEqual(b.bins.length, 1, 'B hears A');
   assert.strictEqual(b.bins[0].length, 324);
+  assert.strictEqual(txOn.mode, 'am', 'a radio that sends no mode is AM');
+
+  // the sideband mode travels with the key-up; anything unknown counts as AM
+  for (const [sent, expect] of [['lsb', 'lsb'], ['usb', 'usb'], ['bogus', 'am']]) {
+    a.send(JSON.stringify({ type: 'tx', on: false }));
+    await wait(30);
+    b.msgs.length = 0;
+    a.send(JSON.stringify({ type: 'tx', on: true, mode: sent }));
+    await wait(60);
+    const on = b.msgs.find((m) => m.type === 'tx' && m.on);
+    assert.ok(on && on.mode === expect, `mode ${sent} arrives as ${expect}`);
+  }
   assert.strictEqual(b.bins[0].readInt16LE(4), 1234, 'audio intact');
   assert.strictEqual(c.bins.length, 0, 'C on another channel hears nothing');
   assert.strictEqual(a.bins.length, 0, 'no echo back to the talker');

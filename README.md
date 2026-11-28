@@ -29,6 +29,8 @@ Get them from the [Releases page](https://github.com/devliquid/cb-radio/releases
 | **CHANNEL** knob | Channels 1–40, with the real CB frequencies. Drag it, scroll it, or use the arrow keys. |
 | **VOLUME** | Speaker volume. |
 | **SQUELCH** | Turn it all the way down to hear open-band static. Turn it up for silence between transmissions. |
+| **USB / OFF / LSB** switch | Sideband. **OFF** is AM, like most CB talk. **USB** and **LSB** are single sideband (upper and lower). Sideband radios only hear each other properly on the same sideband: the other one comes out back to front, an AM radio turns sideband into garble, and a sideband radio hears AM with a carrier whistle. The mode shows next to the frequency. |
+| **CLARIFIER** | Fine-tunes single sideband voices. Each sideband station is a little off frequency, so its voice sounds high-pitched or low-pitched until you turn the clarifier to where it sounds natural. Double-click it to centre it. |
 | **PUSH TO TALK** | Hold to talk. Holding **Space** does the same. Like a real rig, you can't hear while you're keyed up, and the mic unkeys after 3 minutes. |
 | **CH 9 / CH 19** | Jump to the emergency channel or the highway channel. |
 | **SCAN** | Sweeps the band and stops on any channel where someone is talking. |

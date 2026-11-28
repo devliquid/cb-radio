@@ -25,6 +25,8 @@ const DEFAULTS = {
   roger: true,
   echo: false,
   echoAmount: 0.5,     // 0..1
+  mode: 'am',          // sideband switch: 'usb', 'am' (OFF) or 'lsb'
+  clarifier: 0,        // Hz, -800..+800
   theme: 'classic',    // 'classic' (mobile rig) or 'base' (silver base station)
   host: false,
   port: 7140,
@@ -62,6 +64,7 @@ let micLevel = 0;
 let scanning = false;
 let scanHold = 0;
 const talkers = new Map();      // sender id -> handle, on our channel
+const talkerModes = new Map();  // sender id -> 'am' | 'usb' | 'lsb' (older radios don't say, so AM)
 let counts = new Array(40).fill(0);
 let active = new Set();
 let lastHeard = '';
@@ -300,7 +303,7 @@ function refreshTicker() {
 }
 function showChannel() {
   showDigits(settings.channel);
-  $('#freq').textContent = `${FREQS[settings.channel - 1].toFixed(3)} MHz`;
+  $('#freq').textContent = `${FREQS[settings.channel - 1].toFixed(3)} MHz  ${MODE_NAMES[settings.mode] || 'AM'}`;
   renderBand();
 }
 $('#handlePlate').textContent = handle().toUpperCase();
@@ -470,6 +473,7 @@ function onAudio(buf) {
   const ab = ctx.createBuffer(1, pcm.length, RATE);
   const d = ab.getChannelData(0);
   for (let i = 0; i < pcm.length; i++) d[i] = pcm[i] / 32768;
+  sideband(id, d);
   const now = ctx.currentTime;
   let t = players.get(id) || 0;
   if (t < now + 0.03) t = now + 0.12;           // (re)start with a small jitter buffer
@@ -550,11 +554,14 @@ function connect() {
     } else if (m.type === 'tx') {
       if (m.on) {
         talkers.set(m.id, m.handle);
+        talkerModes.set(m.id, MODE_NAMES[m.mode] ? m.mode : 'am');
+        ssbState.delete(m.id);
         lastHeard = m.handle;
         burst(0.16, 0.05);           // kerchunk as the carrier comes up
       } else {
         talkers.delete(m.id);
         players.delete(m.id);
+        ssbState.delete(m.id);
         if (!talkers.size) {
           const left = ctx ? Math.max(0, rxPlayingUntil - ctx.currentTime) : 0;
           setTimeout(() => burst(0.32, 0.22), left * 1000);   // squelch tail
@@ -657,7 +664,7 @@ function startTx() {
   lamp('#lampTx', true);
   rxGate.gain.setTargetAtTime(0, ctx.currentTime, 0.01);   // half duplex: can't hear while keyed
   updateNoise();
-  sendJSON({ type: 'tx', on: true });
+  sendJSON({ type: 'tx', on: true, mode: settings.mode });
   capNode.port.postMessage({ active: true });
   applyEcho();
   txTimer = setTimeout(() => { stopTx(); toast('Time-out: mic unkeyed after 3 minutes'); }, MAX_TX_MS);
@@ -752,6 +759,110 @@ echoSlider.addEventListener('input', () => {
   save(); showEcho(); applyEcho();
   toast(`Echo ${echoSlider.value}%`);
 });
+
+// ============================================================
+//  Sideband (SSB) and clarifier
+// ============================================================
+// OFF is plain AM. On USB or LSB, a voice from another single sideband radio comes in shifted
+// by how far that radio is off frequency, so it sounds high-pitched or low-pitched. Each
+// radio gets its own small offset (from its id), and the CLARIFIER tunes it back to natural.
+// The wrong sideband (USB hearing LSB) comes out back to front, and AM and SSB don't mix:
+// an AM radio turns sideband into garble, and a sideband radio hears AM with a carrier whistle.
+const MODE_NAMES = { am: 'AM', usb: 'USB', lsb: 'LSB' };
+const DRIFTS = [-450, -300, -150, 150, 300, 450];
+const driftOf = (id) => DRIFTS[(Math.imul(id, 2654435761) >>> 0) % DRIFTS.length];
+const HILBERT = (() => {             // 63-tap windowed Hilbert transformer for the 8 kHz voice
+  const n = 63, mid = 31, h = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const k = i - mid;
+    if (k % 2 !== 0) h[i] = (2 / (Math.PI * k)) * (0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (n - 1)));
+  }
+  return h;
+})();
+const ssbState = new Map();          // sender id -> filter history and oscillator phase
+// Moves every frequency in d by hz (negative = down). invert mirrors the spectrum instead.
+function freqShift(st, d, hz, invert) {
+  const w = (2 * Math.PI * hz) / RATE, hist = st.hist, n = HILBERT.length;
+  for (let i = 0; i < d.length; i++) {
+    hist[st.pos] = d[i];
+    let q = 0;
+    for (let k = 0; k < n; k++) q += HILBERT[k] * hist[(st.pos - k + n) % n];
+    const iv = hist[(st.pos - 31 + n) % n];          // the input, delayed to line up with q
+    st.pos = (st.pos + 1) % n;
+    st.phase += w;
+    if (st.phase > Math.PI) st.phase -= 2 * Math.PI; else if (st.phase < -Math.PI) st.phase += 2 * Math.PI;
+    const c = Math.cos(st.phase), s = Math.sin(st.phase);
+    d[i] = invert ? iv * c + q * s : iv * c - q * s;
+  }
+}
+function sideband(id, d) {
+  const tx = talkerModes.get(id) || 'am', rx = settings.mode;
+  if (tx === 'am' && rx === 'am') return;
+  let st = ssbState.get(id);
+  if (!st) { st = { hist: new Float32Array(HILBERT.length), pos: 0, phase: 0, tone: 0 }; ssbState.set(id, st); }
+  const clar = settings.clarifier;
+  if (tx !== 'am' && rx !== 'am') {
+    const off = driftOf(id) - clar;                  // 0 = tuned in: natural voice
+    if (tx === rx) { if (Math.abs(off) >= 15) freqShift(st, d, off, false); }
+    else freqShift(st, d, 3000 + off, true);         // wrong sideband: back to front
+  } else if (rx === 'am') {
+    // an AM radio can't resolve sideband: shifted, rectified garble ("Donald Duck")
+    freqShift(st, d, 550 + driftOf(id), false);
+    for (let i = 0; i < d.length; i++) d[i] = 0.55 * d[i] + 0.9 * (Math.abs(d[i]) - 0.08);
+  } else {
+    // a sideband radio on an AM signal: the voice moves with the clarifier and the carrier whistles
+    if (Math.abs(clar) >= 15) freqShift(st, d, -clar, false);
+    const f = 120 + Math.abs(clar), w = (2 * Math.PI * f) / RATE;
+    for (let i = 0; i < d.length; i++) { st.tone += w; d[i] = 0.8 * d[i] + 0.12 * Math.sin(st.tone); }
+    st.tone %= 2 * Math.PI;
+  }
+}
+
+const ssbSwitch = $('#ssbSwitch');
+function showMode() {
+  ssbSwitch.dataset.mode = settings.mode;
+  ssbSwitch.querySelectorAll('.ssb-labels span').forEach((s) => s.classList.toggle('on', s.dataset.mode === settings.mode));
+  showChannel();
+}
+function setMode(mode) {
+  if (!MODE_NAMES[mode] || mode === settings.mode) return;
+  settings.mode = mode; save();
+  ssbState.clear();
+  showMode();
+  toast(mode === 'am' ? 'Sideband off · AM' : mode === 'usb' ? 'USB · upper sideband' : 'LSB · lower sideband');
+}
+const MODES = ['usb', 'am', 'lsb'];
+ssbSwitch.addEventListener('click', (e) => {
+  const lab = e.target.closest('[data-mode]');
+  if (lab) { setMode(lab.dataset.mode); return; }
+  const r = ssbSwitch.querySelector('.ssb-slot').getBoundingClientRect();     // click on the slot: nearest position
+  const pos = Math.max(0, Math.min(2, Math.floor(((e.clientY - r.top) / r.height) * 3)));
+  setMode(MODES[pos]);
+});
+ssbSwitch.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const i = MODES.indexOf(settings.mode) + (e.deltaY > 0 ? 1 : -1);
+  setMode(MODES[Math.max(0, Math.min(2, i))]);
+}, { passive: false });
+ssbSwitch.addEventListener('keydown', (e) => {
+  const i = MODES.indexOf(settings.mode);
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { setMode(MODES[Math.max(0, i - 1)]); e.preventDefault(); }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { setMode(MODES[Math.min(2, i + 1)]); e.preventDefault(); }
+});
+showMode();
+
+let clarToast = 0;
+const clarKnob = makeKnob($('#knobClar'), {
+  min: -800, max: 800, value: settings.clarifier,
+  onChange: (v) => {
+    v = Math.round(v / 10) * 10;
+    if (Math.abs(v) < 20) v = 0;                     // a little detent at centre
+    settings.clarifier = v; save();
+    clearTimeout(clarToast);
+    clarToast = setTimeout(() => toast(`Clarifier ${v > 0 ? '+' : ''}${v} Hz${settings.mode === 'am' ? ' · works on USB and LSB' : ''}`), 60);
+  },
+});
+$('#knobClar').addEventListener('dblclick', () => clarKnob.set(0));
 
 // ============================================================
 //  Setup sheet
@@ -999,8 +1110,8 @@ function drawCord() {
 
 // ---------- themes ----------
 const THEMES = {
-  classic: { tagline: '40 CHANNEL CITIZENS BAND TRANSCEIVER · AM' },
-  base: { tagline: 'AM BASE STATION · 40 CHANNEL CITIZENS BAND' },
+  classic: { tagline: '40 CHANNEL CITIZENS BAND TRANSCEIVER · AM / SSB' },
+  base: { tagline: 'AM / SSB BASE STATION · 40 CHANNEL CITIZENS BAND' },
 };
 function applyTheme() {
   if (!THEMES[settings.theme]) settings.theme = 'classic';

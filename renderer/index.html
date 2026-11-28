@@ -23,13 +23,27 @@
 
         <div class="face">
           <div class="col knobs">
-            <div class="knob-wrap">
-              <div class="knob small" id="knobVol" tabindex="0" aria-label="Volume"><div class="cap"><span class="mark"></span></div></div>
-              <label>VOLUME</label>
+            <div class="knob-row">
+              <div class="knob-wrap">
+                <div class="knob small" id="knobVol" tabindex="0" aria-label="Volume"><div class="cap"><span class="mark"></span></div></div>
+                <label>VOLUME</label>
+              </div>
+              <div class="knob-wrap">
+                <div class="knob small" id="knobSq" tabindex="0" aria-label="Squelch"><div class="cap"><span class="mark"></span></div></div>
+                <label>SQUELCH</label>
+              </div>
             </div>
-            <div class="knob-wrap">
-              <div class="knob small" id="knobSq" tabindex="0" aria-label="Squelch"><div class="cap"><span class="mark"></span></div></div>
-              <label>SQUELCH</label>
+            <div class="knob-row ssb-row">
+              <div class="ssb" id="ssbSwitch" tabindex="0" role="radiogroup" aria-label="Sideband: USB, off (AM) or LSB"
+                   title="Sideband: USB or LSB for single sideband, OFF for AM">
+                <div class="ssb-labels"><span data-mode="usb">USB</span><span data-mode="am">OFF</span><span data-mode="lsb">LSB</span></div>
+                <div class="ssb-slot"><span class="ssb-lever"></span></div>
+              </div>
+              <div class="knob-wrap">
+                <div class="knob mini" id="knobClar" tabindex="0" aria-label="Clarifier"
+                     title="Clarifier: fine-tunes single sideband voices until they sound natural"><div class="cap"><span class="mark"></span></div></div>
+                <label>CLARIFIER</label>
+              </div>
             </div>
           </div>
 

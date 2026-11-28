@@ -5,12 +5,12 @@
 //   client -> server (text JSON):
 //     {type:'join', channel:1..40, handle}   tune to a channel
 //     {type:'handle', handle}                 change your handle
-//     {type:'tx', on:true|false}              key / unkey the mic
+//     {type:'tx', on:true|false, mode}        key / unkey the mic; mode is 'am', 'usb' or 'lsb'
 //   client -> server (binary): 8 kHz mono Int16 PCM, only while keyed
 //   server -> client (text JSON):
 //     {type:'hello', id}
 //     {type:'status', counts:[40], active:[channel numbers with someone talking]}
-//     {type:'tx', id, handle, on}
+//     {type:'tx', id, handle, on, mode}
 //   server -> client (binary): uint32 LE sender id + the sender's PCM
 
 const http = require('http');
@@ -18,6 +18,7 @@ const { WebSocketServer } = require('ws');
 
 const MAX_FRAME = 4096;        // bytes of audio per message
 const MAX_TX_MS = 3 * 60_000;  // a stuck mic is unkeyed after 3 minutes
+const MODES = new Set(['am', 'usb', 'lsb']);
 
 function sanitize(h) {
   const s = String(h || '').replace(/[^\w .\-'!?#&]/g, '').trim().slice(0, 16);
@@ -68,7 +69,7 @@ function startServer(port = 7155, host = '0.0.0.0') {
   }
 
   wss.on('connection', (ws) => {
-    const c = { ws, id: nextId++ >>> 0, channel: 0, handle: 'Unknown', tx: false, alive: true, txTimer: null };
+    const c = { ws, id: nextId++ >>> 0, channel: 0, handle: 'Unknown', tx: false, mode: 'am', alive: true, txTimer: null };
     clients.add(c);
     send(ws, JSON.stringify({ type: 'hello', id: c.id }));
     send(ws, status());
@@ -95,7 +96,7 @@ function startServer(port = 7155, host = '0.0.0.0') {
         c.handle = sanitize(m.handle);
         // tell the newcomer who is already talking here
         for (const o of clients) {
-          if (o !== c && o.tx && o.channel === ch) send(ws, JSON.stringify({ type: 'tx', id: o.id, handle: o.handle, on: true }));
+          if (o !== c && o.tx && o.channel === ch) send(ws, JSON.stringify({ type: 'tx', id: o.id, handle: o.handle, on: true, mode: o.mode }));
         }
         broadcastStatus();
       } else if (m.type === 'handle') {
@@ -103,8 +104,9 @@ function startServer(port = 7155, host = '0.0.0.0') {
       } else if (m.type === 'tx' && c.channel) {
         if (m.on && !c.tx) {
           c.tx = true;
+          c.mode = MODES.has(m.mode) ? m.mode : 'am';
           c.txTimer = setTimeout(() => endTx(c), MAX_TX_MS);
-          toChannel(c, { type: 'tx', id: c.id, handle: c.handle, on: true });
+          toChannel(c, { type: 'tx', id: c.id, handle: c.handle, on: true, mode: c.mode });
           broadcastStatus();
         } else if (!m.on) {
           endTx(c);
