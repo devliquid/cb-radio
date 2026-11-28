@@ -142,7 +142,7 @@ body {
     linear-gradient(#2c2f35, var(--face));
   box-shadow: 0 2px 6px rgba(0,0,0,0.7) inset, 0 1px 0 rgba(255,255,255,0.05);
   display: grid;
-  grid-template-columns: 170px 1fr 210px;
+  grid-template-columns: 170px minmax(0, 1fr) 190px;
   align-items: center;
   padding: 4px 14px;
   gap: 14px;
@@ -231,11 +231,11 @@ label, .col.chan > label {
 .knob.big .mark { width: 6px; margin-left: -3px; background: var(--amber); box-shadow: 0 0 6px rgba(255,179,71,0.8); }
 
 .col.chan { position: relative; gap: 14px; justify-content: center; }
-.chan-top { display: flex; align-items: center; gap: 12px; }
+.chan-top { display: flex; align-items: center; gap: 10px; }
 .ch-buttons { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.key.ch-btn { min-width: 62px; width: 62px; height: 44px; font-size: 18px; letter-spacing: 0; }
+.key.ch-btn { min-width: 56px; width: 56px; height: 44px; font-size: 18px; letter-spacing: 0; }
 .band-screen {
-  width: 112px; height: 112px; border-radius: 8px;
+  width: 106px; height: 108px; border-radius: 8px;
   background: #120403; border: 3px solid #050506;
   box-shadow: 0 0 0 2px #3b3e44, 0 4px 10px rgba(0,0,0,0.8) inset;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -304,7 +304,7 @@ body.theme-base .band-screen { box-shadow: 0 0 0 2px #8d9197, 0 4px 10px rgba(0,
   border: 3px solid #050506;
   box-shadow: 0 0 0 2px #3b3e44, 0 0 0 4px #0b0c0e, 0 6px 14px rgba(0,0,0,0.8) inset;
   display: grid;
-  grid-template-columns: 210px 1fr;
+  grid-template-columns: 200px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) 26px 12px;
   gap: 6px 10px;
   padding: 8px 12px 6px;
