@@ -1,6 +1,6 @@
 {
   "name": "breaker40-base-station",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Relay server for Breaker 40 CB. Deploy this folder on its own so anyone on the internet can connect.",
   "main": "server.js",
   "scripts": {
