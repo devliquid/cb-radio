@@ -559,3 +559,131 @@ kbd {
   box-shadow: 0 3px 0 #0a0a0c;
   color: #f2f2f2;
 }
+
+/* ============================================================
+   Theme: silver base station with a desk mic
+   ============================================================ */
+body.theme-base {
+  --label: #2e3136;
+  --meter-ink: #ff9a3c;
+  --meter-hot: #ff3b22;
+  --meter-sub: #59c85f;
+  --meter-inner: #59c85f;
+  --meter-needle: #f2f2f2;
+  background:
+    radial-gradient(ellipse at 50% 25%, rgba(255,255,255,0.08), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0 3px, transparent 3px 9px),
+    linear-gradient(#3b3732, #1b1815);
+}
+body.theme-base .bracket { display: none; }
+body.theme-base #radio::after {
+  content: ""; position: absolute; left: 70px; right: 70px; bottom: -14px; height: 16px; z-index: -1;
+  background:
+    linear-gradient(90deg, #111 0 70px, transparent 70px calc(100% - 70px), #111 calc(100% - 70px));
+  border-radius: 0 0 4px 4px;
+}
+body.theme-base .case {
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.07) 0 1px, rgba(0,0,0,0.035) 1px 3px),
+    linear-gradient(#e2e4e7, #b9bdc3 55%, #a3a8ae);
+  box-shadow:
+    0 26px 50px rgba(0,0,0,0.6),
+    0 2px 0 rgba(255,255,255,0.8) inset,
+    0 -3px 0 rgba(0,0,0,0.25) inset;
+}
+body.theme-base .trim {
+  background: linear-gradient(#17181b, #050506);
+  box-shadow: 0 0 0 2px #8d9197, 0 2px 6px rgba(0,0,0,0.6) inset;
+}
+body.theme-base .brand { color: #e8eaed; text-shadow: none; }
+body.theme-base .brand b { color: #ff3b22; text-shadow: 0 0 8px rgba(255,59,34,0.6); }
+body.theme-base .tagline { color: #b9bdc3; opacity: 1; }
+body.theme-base .screws { display: none; }
+body.theme-base .face {
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0 1px, rgba(0,0,0,0.03) 1px 3px),
+    linear-gradient(#d3d6da, #b6bac0);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35) inset, 0 1px 0 rgba(255,255,255,0.6);
+}
+body.theme-base .knob { background: radial-gradient(circle, #050506 60%, #6f737a 62%, #1a1b1e 70%); }
+body.theme-base .knob .cap { background: repeating-conic-gradient(from 0deg, #141518 0 5deg, #26282c 5deg 10deg); }
+body.theme-base .knob .cap::before { background: radial-gradient(circle at 35% 30%, #4a4d53, #1c1d20 60%, #0b0c0d); }
+body.theme-base .knob.big .mark { background: #f0f0f0; box-shadow: 0 0 4px rgba(255,255,255,0.6); }
+body.theme-base .detents i { background: #50545a; }
+body.theme-base .detents i.major { background: #24272b; }
+body.theme-base .detents b { color: #2e3136; }
+body.theme-base .glass { box-shadow: 0 0 0 2px #8d9197, 0 0 0 4px #5c6066, 0 6px 14px rgba(0,0,0,0.8) inset; }
+body.theme-base .meter {
+  background: radial-gradient(ellipse at 50% 90%, #1b1410, #070606 75%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.8) inset;
+}
+body.theme-base .key { background: linear-gradient(#2b2d32, #141518); box-shadow: 0 4px 0 #5c6066, 0 5px 8px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.15) inset; }
+body.theme-base .key.red { background: linear-gradient(#b8291a, #7d150b); }
+body.theme-base .key:active, body.theme-base .key.pressed { box-shadow: 0 1px 0 #5c6066, 0 2px 4px rgba(0,0,0,0.5); }
+body.theme-base .echo-box { background: linear-gradient(#26282c, #121315); }
+body.theme-base .handle-plate { background: linear-gradient(#1b1c1f, #08090a); color: #9ea3aa; box-shadow: 0 0 0 1px #7d8188; }
+body.theme-base .handle-plate b { color: #ff5a3c; }
+
+/* desk mic: the hand mic's parts, rearranged into a head on a neck over a wedge base */
+body.theme-base #mic {
+  left: 930px; top: 92px; width: 250px; height: 440px;
+  transform: none; display: block;
+  filter: drop-shadow(0 18px 18px rgba(0,0,0,0.6));
+}
+body.theme-base .mic-hook, body.theme-base .mic-strain { display: none; }
+body.theme-base .mic-body {
+  position: absolute; inset: 0; width: auto; height: auto; margin: 0; padding: 0;
+  border-radius: 0; background: none; box-shadow: none; display: block;
+}
+body.theme-base .mic-body::before {        /* neck */
+  content: ""; position: absolute; left: 106px; top: 104px; width: 46px; height: 240px; z-index: 1;
+  border-radius: 20px 20px 8px 8px;
+  background: linear-gradient(90deg, #0b0c0e, #3d4046 42%, #17181b 75%, #0b0c0e);
+  transform: skewX(-7deg);
+}
+body.theme-base .mic-body::after {         /* base */
+  content: ""; position: absolute; left: 0; right: 4px; bottom: 34px; height: 84px; z-index: 2;
+  background: linear-gradient(#34373c, #141518 40%, #070708);
+  clip-path: polygon(22% 0, 80% 0, 100% 100%, 0 100%);
+  border-radius: 12px;
+}
+body.theme-base .grille {                  /* head */
+  position: absolute; left: 34px; top: 0; z-index: 3;
+  width: 176px; height: 118px;
+  border-radius: 64px 64px 44px 44px / 58px 58px 46px 46px;
+  background:
+    radial-gradient(circle, #44474d 1.1px, transparent 1.7px) 0 0 / 5px 5px,
+    radial-gradient(ellipse at 40% 30%, #26282c, #0a0a0b 70%);
+  border: 6px solid #1c1d20;
+  border-bottom-color: #cfd2d6;
+  box-shadow: 0 4px 0 #8d9197;
+  transform: rotate(-8deg);
+}
+body.theme-base .mic-brand {               /* badge on the neck */
+  position: absolute; left: 100px; top: 262px; z-index: 3; margin: 0;
+  padding: 3px 6px; border-radius: 2px;
+  font: italic 900 9px "Arial Black", Impact, sans-serif; letter-spacing: 1px;
+  color: #222; background: linear-gradient(#f4f5f7, #9ea2a8);
+  transform: skewX(-7deg);
+}
+body.theme-base #ptt {                     /* white talk bar on the base */
+  position: absolute; left: 34px; bottom: 50px; z-index: 4; margin: 0;
+  width: 118px; height: 34px; border-radius: 5px;
+  flex-direction: row; gap: 5px;
+  font: 800 10px "Segoe UI", Arial, sans-serif; letter-spacing: 2px; color: #3a3d42;
+  background: linear-gradient(#ffffff, #d5d8db);
+  box-shadow: 0 5px 0 #8b8f95, 0 7px 8px rgba(0,0,0,0.5);
+}
+body.theme-base #ptt.down {
+  transform: translateY(4px); filter: none;
+  box-shadow: 0 1px 0 #8b8f95, 0 2px 3px rgba(0,0,0,0.5);
+}
+body.theme-base #ptt::after {              /* the lock key beside it */
+  content: "LOCK"; position: absolute; left: 124px; top: 4px; width: 44px; height: 26px; border-radius: 4px;
+  font: 700 7px "Segoe UI", Arial, sans-serif; letter-spacing: 1px; color: #6b6f75;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(#f2f3f5, #c9ccd0); box-shadow: 0 4px 0 #8b8f95;
+  pointer-events: none;
+}
+body.theme-base .mic-hint { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; text-align: center; color: #b9bdc3; }

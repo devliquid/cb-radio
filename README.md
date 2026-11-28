@@ -49,6 +49,7 @@ Each PC keeps its own settings, and they're still there after a restart.
 - **Microphone / Speaker:** choose devices, or leave them on Windows default. If a chosen device is unplugged, the app falls back to the default.
 - **Mic level and Mic gain:** talk normally and adjust the gain until the level bar sits in the green, below the dashed line. That's the level other people will hear.
 - **Push-to-talk key:** click **Change…** and press any key. Esc cancels. Tab and Enter can't be used because they move around the window.
+- **Theme:** **Classic** is the black mobile rig with a hand mic. **Silver base station** is a silver tabletop radio with a desk mic, where the white bar on the mic's base is the push-to-talk.
 - **Updates:** shows this version and the latest one on GitHub. **Check for updates** downloads a newer version, closes the radio, installs it and opens the radio again. That works in the installed Windows app and the Linux AppImage. The portable exe and the `.deb` can't replace themselves, so for those it opens the download page instead.
 
 ## How people find each other

@@ -25,6 +25,7 @@ const DEFAULTS = {
   roger: true,
   echo: false,
   echoAmount: 0.5,     // 0..1
+  theme: 'classic',    // 'classic' (mobile rig) or 'base' (silver base station)
   host: false,
   port: 7140,
   micId: '',
@@ -124,7 +125,12 @@ const meterSvg = $('#meter');
 let needle;
 // Needle pivot. It sits inside the 200x120 viewBox so the needle visibly comes out of the hub.
 const METER_CX = 100, METER_CY = 116;
-(function buildMeter() {
+// Colours come from the theme's CSS variables, so the meter is rebuilt when the theme changes.
+function buildMeter() {
+  const css = getComputedStyle(document.body);
+  const v = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+  const ink = v('--meter-ink', '#1d1a14'), hot = v('--meter-hot', '#b3200f'), sub = v('--meter-sub', '#5b4d33');
+  const inner = v('--meter-inner', ink), nd = v('--meter-needle', '#111');
   const cx = METER_CX, cy = METER_CY, r = 100;
   const a0 = -50, a1 = 50;
   const pt = (deg, rad) => {
@@ -136,37 +142,37 @@ const METER_CX = 100, METER_CY = 116;
     return `M${x0.toFixed(1)},${y0.toFixed(1)} A${rad},${rad} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}`;
   };
   let s = '';
-  s += `<path d="${arc(r - 18, a0, 18)}" stroke="#1d1a14" stroke-width="2" fill="none"/>`;
-  s += `<path d="${arc(r - 18, 18, a1)}" stroke="#b3200f" stroke-width="4" fill="none"/>`;
-  s += `<path d="${arc(r - 38, a0, a1)}" stroke="#1d1a14" stroke-width="1" fill="none"/>`;
+  s += `<path d="${arc(r - 18, a0, 18)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
+  s += `<path d="${arc(r - 18, 18, a1)}" stroke="${hot}" stroke-width="4" fill="none"/>`;
+  s += `<path d="${arc(r - 38, a0, a1)}" stroke="${inner}" stroke-width="1" fill="none"/>`;
   const sLabels = ['1', '3', '5', '7', '9', '+20', '+40'];
   sLabels.forEach((lab, i) => {
     const deg = a0 + (i / (sLabels.length - 1)) * (a1 - a0);
     const [x0, y0] = pt(deg, r - 18), [x1, y1] = pt(deg, r - 26);
     const [tx, ty] = pt(deg, r - 8);
-    const col = i >= 5 ? '#b3200f' : '#1d1a14';
+    const col = i >= 5 ? hot : ink;
     s += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${col}" stroke-width="2"/>`;
     s += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="${col}" font-size="10" font-weight="700" text-anchor="middle" font-family="Arial">${lab}</text>`;
   });
   for (let i = 0; i <= 10; i++) {
     const deg = a0 + (i / 10) * (a1 - a0);
     const [x0, y0] = pt(deg, r - 38), [x1, y1] = pt(deg, r - 33);
-    s += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="#1d1a14" stroke-width="1"/>`;
+    s += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${inner}" stroke-width="1"/>`;
     if (i % 5 === 0) {
       const [tx, ty] = pt(deg, r - 46);
-      s += `<text x="${tx.toFixed(1)}" y="${(ty + 3).toFixed(1)}" fill="#1d1a14" font-size="7" text-anchor="middle" font-family="Arial">${i}</text>`;
+      s += `<text x="${tx.toFixed(1)}" y="${(ty + 3).toFixed(1)}" fill="${inner}" font-size="7" text-anchor="middle" font-family="Arial">${i}</text>`;
     }
   }
-  s += `<text x="16" y="24" font-size="10" font-weight="900" fill="#1d1a14" font-family="Arial">S</text>`;
-  s += `<text x="14" y="70" font-size="7" font-weight="700" fill="#1d1a14" font-family="Arial">RF</text>`;
-  s += `<text x="100" y="${cy - 17}" font-size="8" font-weight="700" fill="#5b4d33" text-anchor="middle" font-family="Arial" letter-spacing="2">SIGNAL · POWER</text>`;
+  s += `<text x="16" y="24" font-size="10" font-weight="900" fill="${ink}" font-family="Arial">S</text>`;
+  s += `<text x="14" y="70" font-size="7" font-weight="700" fill="${inner}" font-family="Arial">RF</text>`;
+  s += `<text x="100" y="${cy - 17}" font-size="8" font-weight="700" fill="${sub}" text-anchor="middle" font-family="Arial" letter-spacing="2">SIGNAL · POWER</text>`;
   // The needle's tip stops just past the scale arc. The hub is drawn on top, centred on the pivot.
-  s += `<g id="needle"><line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - r + 12}" stroke="#111" stroke-width="2" stroke-linecap="round"/></g>`;
+  s += `<g id="needle"><line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - r + 12}" stroke="${nd}" stroke-width="2" stroke-linecap="round"/></g>`;
   s += `<circle cx="${cx}" cy="${cy}" r="11" fill="#1b1b1b"/>`;
   s += `<circle cx="${cx}" cy="${cy}" r="3" fill="#3a3a3a"/>`;
   meterSvg.innerHTML = s;
   needle = meterSvg.querySelector('#needle');
-})();
+}
 let meterVal = 0;
 // v is 0..1 across the scale. rotate() carries its own centre, so nothing else may set a
 // transform-origin on the needle: Chromium would apply both and swing it off the dial.
@@ -755,6 +761,7 @@ function openSetup() {
   $('#inHandle').value = settings.handle;
   $('#inServer').value = settings.server;
   $('#inHost').checked = settings.host;
+  $('#inTheme').value = settings.theme;
   $('#inPort').value = settings.port;
   $('#inGain').value = settings.micGain;
   $('#gainVal').textContent = `${Math.round(settings.micGain * 100)}%`;
@@ -958,8 +965,16 @@ function frame() {
 }
 
 // coiled cord from the radio to the mic
-(function drawCord() {
+function drawCord() {
   const svg = $('#cord');
+  if (settings.theme === 'base') {
+    // desk mic: a plain cable from the back of the radio, sagging to the back of the mic's base
+    const d = 'M880,440 C905,560 960,560 985,470';
+    svg.innerHTML =
+      `<path d="${d}" fill="none" stroke="#050506" stroke-width="7" stroke-linecap="round"/>` +
+      `<path d="${d}" fill="none" stroke="#2c2e33" stroke-width="3" stroke-linecap="round"/>`;
+    return;
+  }
   // radio side jack -> into the mic's strain relief (centre x 1055, spans y 422-462; the mic is drawn on top)
   const p0 = [895, 410], p3 = [1055, 448];
   const c1 = [960, 600], c2 = [1055, 640];   // c2 straight below p3, so the cord rises straight into the mic
@@ -980,7 +995,25 @@ function frame() {
   svg.innerHTML =
     `<path d="${d}" fill="none" stroke="#050506" stroke-width="5" stroke-linecap="round"/>` +
     `<path d="${d}" fill="none" stroke="#2c2e33" stroke-width="2.5" stroke-linecap="round"/>`;
-})();
+}
+
+// ---------- themes ----------
+const THEMES = {
+  classic: { tagline: '40 CHANNEL CITIZENS BAND TRANSCEIVER · AM' },
+  base: { tagline: 'AM BASE STATION · 40 CHANNEL CITIZENS BAND' },
+};
+function applyTheme() {
+  if (!THEMES[settings.theme]) settings.theme = 'classic';
+  document.body.classList.toggle('theme-base', settings.theme === 'base');
+  document.querySelector('.tagline').textContent = THEMES[settings.theme].tagline;
+  buildMeter();
+  drawCord();
+}
+applyTheme();
+$('#inTheme').addEventListener('change', (e) => {
+  settings.theme = e.target.value; save();
+  applyTheme();
+});
 
 // ---------- updates ----------
 // Check for updates: if a newer release exists, download it, close, install, and start again.
